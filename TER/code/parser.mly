@@ -46,7 +46,6 @@
 %token THIS
 %token VOID
 
-
 %token EOF 
 
 
@@ -105,7 +104,13 @@ instruction:
  | id=IDENT; MUN; SEMI {()}
  | id=IDENT; PUN; SEMI {()}
  | datt=decl_att; SEMI {()}
+ | dmet=decl_meth; {()}
  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}
+ | RETURN; e=expression; SEMI {()}
+ | RETURN; SEMI {()}
+;
+decl_meth:
+ | t=typ; id=IDENT; OP; dats=separated_list(COMMA,decl_att); CP; bloc {()}
 ;
 decl_att:
  | t=typ; id=IDENT {(*(id,t*)()}
@@ -114,6 +119,7 @@ typ:
  | INT {(*TypInteger*)()}
  (*| STRING {(*TypString*)()}*)
  | BOOL {(*TypBoolean*)()}
+ | VOID {()}
 ;
 expression:
  | loc=location {(*Literal(lit)*)()}
@@ -122,6 +128,7 @@ expression:
 ;
 literal:
  | i=CONST_INT {(*Int i*)()}
+ | b=CONST_BOOL {(*bool b*)()}
 ;
 location:
  | id=IDENT {(*identifier(id)*)()}

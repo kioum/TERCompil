@@ -11,7 +11,11 @@ class B{
 class A_A1{
     int i; 
 }
-
+class B_A1{
+    void machin (int c){
+	return;
+    }
+}
 public class p1 {
     public static void main(String truc []){
 	int truc;
