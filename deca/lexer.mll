@@ -9,7 +9,6 @@
     List.iter (fun (s, k) -> Hashtbl.add h s k)
       [ "true",     CONST_BOOL(true);
 	"false",    CONST_BOOL(false);
-	"while",    WHILE;
 	"if",       IF;
 	"else",     ELSE;
 	"int",      INT;
@@ -38,7 +37,7 @@
 let alpha = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 (* EXPRESSION RÉGULIÈRE POUR LES CHIFFRES *)
-let ident = ['a'-'z' '_'] (alpha | '_' | '\'' | digit)*  
+let ident = alpha (alpha | '_' | '\'' | digit)*  
   
   (* RÈGLES RÉCURSIVES *)
   
