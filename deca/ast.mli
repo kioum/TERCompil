@@ -20,8 +20,8 @@ and class_def = {
 
 and decl =
   | Att of typ * ident
-  | Constr
-  | Meth of typ * ident * (typ*ident) list * block
+  | Constr of ident * (typ * ident) list * block
+  | Meth of typ * ident * (typ * ident) list * block
       
 and typ =
   | TypInteger
@@ -32,34 +32,40 @@ and typ =
 (* Un bloc de code est une liste d'instructions *)
 and block = instruction list
   
-and instruction = Skip
-  | Set   of location   * expression                              (* Affectation       *)
-  | For   of expression * expression * expression * block         (* Boucle For        *)
-  | If    of expression * block * block                           (* Branchement       *)
+and instruction =
+    Skip
+  | Set   of location * 'info expression                              (* Affectation       *)
+  | For   of 'info expression * 'info expression * 'info expression * block         (* Boucle For        *)
+  | If    of 'info expression * block * block                           (* Branchement       *)
+  | If    of 'info expression * block
   | ProcCall of call                                              (* Appel de fonction *)
 
-and expression =
-  | Literal   of literal                         (* Valeur immédiate    *)
-  | Location  of location                        (* Valeur en mémoire   *)
-  | Binop     of binop * expression * expression (* Opération binaire   *)
-  | Unop      of binop * expression              (* Opération unaire    *)   
-  | FunCall   of call                            (* Appel de fonction   *)
+and 'info expr_ =
+  | Econst    of const                         (* Valeur immédiate    *)
+  | Eaccess    of access                        (* Valeur en mémoire   *)
+  | Ebinop     of 'info expression * binop * 'info expression (* Opération binaire   *)
+  | Eunop      of binop * 'info expression              (* Opération unaire    *)   
+  | EfunCall   of call                            (* Appel de fonction   *)
+  | EinstOf of 'info expression * ident
+  | Enew of ident * 'info expression list
       
 and call = string * expression list (* Appel de fonction *)
   
-and literal =
-  | Int  of int      (* Constante entière   *)
-  | Bool of bool     (* Constante booléenne *)
-  | String of string (* Constante String    *)
-  | Null             (* variable null       *)
+and const =
+  | Cint  of int      (* Constante entière   *)
+  | Cbool of bool     (* Constante booléenne *)
+  | Cstring of string (* Constante String    *)
+  | Cnull             (* variable null       *)
 
-and location =
-  | Identifier  of string   (* Variable en mémoire *)
-  
+and access =
+  | Aident
+  | Athis
+      
 and binop =
   | Add (* +  *) | Mult (* *  *) | Sub (* - *)
   | Eq  (* == *) | Neq  (* != *) | Modulo (* % *)
-  | Lt  (* <  *) | Le   (* <= *) 
+  | Lt  (* <  *) | Le   (* <= *)
+  | Mt  (* >  *) | Me   (* >= *) 
   | And (* && *) | Or   (* || *)
 
 and unop =
@@ -68,3 +74,14 @@ and unop =
       (*
   | Pun  (* ++ *) | Mun  (* -- *) 
       *)
+and ('a, 'b) node = {
+  node: 'a;
+  info: 'b;
+}
+
+and position = Lexing.position * Lexing.position
+
+and 'info expression = ('info expr_, 'info) node
+
+and parsed_prog = position prog
+and typed_prog = typ prog

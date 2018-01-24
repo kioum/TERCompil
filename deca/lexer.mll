@@ -70,7 +70,7 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { COMMA }
   | ";"
       { SEMI }
-  | ":="
+  | "="
       { SET }
   | "+"
       { PLUS }
@@ -92,6 +92,10 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { LT }
   | "<="
       { LE }
+  | ">"
+      { MT }
+  | ">="
+      { ME }
   | "&&"
       { AND }
   | "||"
