@@ -8,7 +8,9 @@ class A2{
 class B{
     truc=truc+truc;
 }
-class A_A1{}
+class A_A1{
+    
+}
 
 public class p1 {
     public static void main(String truc [])

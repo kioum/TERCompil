@@ -26,7 +26,7 @@
 %token SET
 
 %token VAR
-%token INT BOOL STRING
+%token INT BOOL
 %token NULL
 
 %token PRINT
@@ -45,7 +45,7 @@
 %token STATIC
 %token THIS
 %token VOID
-%token MAIN
+
 
 %token EOF 
 
@@ -79,16 +79,17 @@
       (* RÈGLES DE GRAMMAIRE *)
 
 prog:
-   |cds=class_decls; mcd=main_class_decl ;EOF { (*cds@mcd*)() }
+   |cds=class_decls; mcd=main_class_decl; EOF { (*cds@mcd*)() }
 ;
   
 main_class_decl:
-   |PUBLIC; CLASS; id=IDENT; OA; PUBLIC; STATIC; VOID; MAIN; OP; STRING; id2=IDENT; OC; CC; CP; (* bloc*) CA {(*id*)()}
+  PUBLIC; CLASS; id=IDENT; OA;
+PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP; (* bloc*) CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
 ;
 class_decls:
-   |cds=list(class_decl) {(*cds*)()}
+  cds=list(class_decl) {(*cds*)()}
 ;
 class_decl:
-   |CLASS; id=IDENT; OA; (* bloc *) CA {(*id*)()}
-   |CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; (* bloc *) CA {(*(id;id2)*)()}
+ |CLASS; id=IDENT; OA; (* bloc *) CA {(*id*)()}
+ |CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; (* bloc *) CA {(*(id;id2)*)()}
 ;

@@ -65,11 +65,11 @@
 %left PT
 *)
 
-/* SYMBOLE DE DÉPART DE LA GRAMMAIRE : ON DONNE SON NOM ET SON TYPE
+(* SYMBOLE DE DÉPART DE LA GRAMMAIRE : ON DONNE SON NOM ET SON TYPE
    (QUI SERA LE TYPE DES PROGRAMMES DANS L'AST)
 
   IL FAUT REMPLACER 'unit' CI-DESSOUS PAR LE TYPE DE L'AST.
-*/
+*)
    
 %start prog
 %type < unit > prog (* ? *)
@@ -84,12 +84,48 @@ prog:
   
 main_class_decl:
   PUBLIC; CLASS; id=IDENT; OA;
-PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP; (* bloc*) CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
+PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP; bloc; CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
 ;
 class_decls:
   cds=list(class_decl) {(*cds*)()}
 ;
 class_decl:
- |CLASS; id=IDENT; OA; (* bloc *) CA {(*id*)()}
- |CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; (* bloc *) CA {(*(id;id2)*)()}
+ |CLASS; id=IDENT; OA; bloc; CA {(*id*)()}
+ |CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; bloc; CA {(*(id;id2)*)()}
+;
+bloc:
+ |is=instructions {is}
+;
+instructions:
+ | inst=list(instruction) {(*inst*)() }
+;
+instruction:
+ |l=location; SET; e=expression {(*Set(l,e)*)()}
+ | id=IDENT; MUN {()}
+ | id=IDENT; PUN {()}
+;
+location:
+ |id=IDENT {(*identifier(id)*)()}
+;
+expression:
+ | loc=location {(*Literal(lit)*)()}
+ | lit=literal { (*Literal(lit)*)()}
+ | e1=expression; op=binop; e2=expression  { (*Binop(op, e1, e2)*)() }
+;
+literal:
+ |i=CONST_INT {(*Int i*)()}
+;
+
+%inline binop:
+    | PLUS   { (*Add*) ()}
+    | MINUS  { (*Sub*) ()}
+    | MULT   { (*Mult*)()}
+    | EQUAL  { (*Eq*)  ()}
+    | NEQ    { (*Neq*) ()}
+    | LT     { (*Lt *) ()}
+    | LE     { (*Le *) ()}
+    | MT     { (*Mt *) ()}
+    | ME     { (*Me *) ()}
+    | AND    { (*And*) ()}
+    | OR     { (*Or*)  ()}
 ;
