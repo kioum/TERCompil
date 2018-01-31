@@ -56,8 +56,10 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { id_or_keyword (lexeme lexbuf) }
   | '"'
       { lire_string (Buffer.create 17) lexbuf }
+  | "."
+      { PT }    
   | "("
-      { OP }
+      { OP } 
   | ")"
       { CP }
   | "["

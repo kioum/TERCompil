@@ -36,10 +36,11 @@ and 'info block = 'info instruction list
 and 'info instr =
     ISkip
   | Iset   of 'info access * 'info expression                              (* Affectation       *)
-  | Ifor   of 'info expression * 'info expression * 'info expression * 'info block         (* Boucle For        *)
+  | Ifor   of 'info expression option * 'info expression option * 'info expression option * 'info block        (* Boucle For        *)
   | Iifelse    of 'info expression * 'info block * 'info block                           (* Branchement       *)
   | Iif    of 'info expression * 'info block
   | IprocCall of 'info call                                              (* Appel de fonction *)
+  | Ireturn of 'info expression option
 
 and 'info expr_ =
   | Econst    of const                         (* Valeur immédiate    *)
@@ -52,7 +53,7 @@ and 'info expr_ =
   | Epreincr of incr * 'info access
   | Epostincr of 'info access * incr
       
-and 'info call = string * 'info expression list (* Appel de fonction *)
+and 'info call = string * 'info expression option list (* Appel de fonction *)
   
 and const =
   | Cint  of int      (* Constante entière   *)
