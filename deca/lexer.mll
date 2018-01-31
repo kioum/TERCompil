@@ -12,6 +12,7 @@
 	"if",       IF;
 	"else",     ELSE;
 	"int",      INT;
+	"string",   STRING;
 	"boolean",  BOOL;
 	"class",    CLASS;
 	"extends",  EXTENDS;
@@ -23,6 +24,7 @@
 	"this",     THIS;
 	"void",     VOID;
 	"instanceof", INSTOF;
+	"null",     NULL;
       ] ;
     fun s ->
       try  Hashtbl.find h s
@@ -48,8 +50,10 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { new_line lexbuf; token lexbuf }
   | [' ' '\t' '\r']+
       { token lexbuf }
-  | "(*"
+  | "/*"
       { comment lexbuf; token lexbuf }
+  | "//"
+      { comment lexbuf; token lexbuf }     
   | digit+
       { CONST_INT (Int32.of_string (lexeme lexbuf)) }
   | ident

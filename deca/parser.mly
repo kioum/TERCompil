@@ -1,12 +1,14 @@
 %{
 (* let mk_loc p e = *)
+  open Printf
 %}
   
 (* Déclaration des tokens *)
   
-%token <int> CONST_INT
+%token <int32> CONST_INT
 %token <bool> CONST_BOOL
 %token <string> IDENT
+%token <string> CONST_STRING 
 
 %token PLUS MINUS MULT DIV MOD
 %token AND OR
@@ -26,7 +28,7 @@
 %token SET
 
 %token VAR
-%token INT BOOL
+%token INT BOOL STRING
 %token NULL
 
 %token PRINT
@@ -52,7 +54,6 @@
 (* Déclaration des priorités*)
 
 
-
 %right SET
 %left OR
 %left AND
@@ -68,7 +69,7 @@
    (QUI SERA LE TYPE DES PROGRAMMES DANS L'AST)
   IL FAUT REMPLACER 'unit' CI-DESSOUS PAR LE TYPE DE L'AST.
 *)
-   
+
 %start prog
 %type < unit > prog (* ? *)
     
@@ -83,14 +84,14 @@ prog:
 main_class_def:
  | PUBLIC; CLASS; id=IDENT; OA;
 PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP;
-bloc;CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
+bloc;CA {(*id*)(*(if main<>"main" || str <>"String" then $syntaxerror)*)()}
 ;
 class_defs:
  | cds=list(class_def) {(*cds*)()}
 ;
 class_def:
- | CLASS; id=IDENT; bloc; {(*id*)()}
- | CLASS; id=IDENT; EXTENDS; id2=IDENT; bloc; {(*(id;id2)*)()}
+ | CLASS; id=IDENT; OA; dl=list(decl); CA; {(*id*)()}
+ | CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; dl=list(decl); CA; {(*(id;id2)*)()}
 ;
 bloc:
  | OA; is=instructions; CA {(*is*)()}
@@ -99,38 +100,82 @@ instructions:
  | inst=list(instruction) {(*inst*)() }
 ;
 instruction:
- | l=location; SET; e=expression; SEMI {(*Set(l,e)*)()}
- | id=IDENT; MUN; SEMI {()}
+ | ie=instr_expr; SEMI {()}	   
+ | id=IDENT; SET; e=expression; SEMI {(*Set(id,e)*)()}
+ | id=IDENT; SEMI {()}
+ | t=typ; id=IDENT; SEMI {()}
+ | t=typ; id=IDENT; SET; e=expression; SEMI {()}
+ | IF; OP; e=expression; CP; i=instruction; {()}
+ | IF; OP; e=expression; CP; i1=instruction; ELSE; i2=instruction {()}
+ | FOR; OP; e1=expression; COMMA; e2=expression; COMMA; e3=expression; CP; i=instruction {()}
+ | bloc {()}
+(* | id=IDENT; MUN; SEMI {()}
  | id=IDENT; PUN; SEMI {()}
  | datt=decl_att; SEMI {()}
- | dmet=decl_meth; {()}
- | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}
+ | dmet=decl_meth; SEMI {()}
+ | dconst=decl_constr; SEMI {()}
+	  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}*)
  | RETURN; e=expression; SEMI {()}
  | RETURN; SEMI {()}
 ;
+instr_expr:
+ | ac=acces; SET; e=expression{()}
+ | ap=appel; {()}
+ | MUN; ac=acces {()}
+ | PUN; ac=acces {()}
+ | ac=acces; MUN {()}
+ | ac=acces; PUN {()}
+ | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP {(*New(id,l)*)()}
+;
+appel:
+ | ac=acces; OP; le=list(expression) {()}
+;
+decl:
+ | dc=decl_constr {()}
+ | dm=decl_meth {()}
+ | da=decl_att {()}
+;
+decl_constr:
+ | id=IDENT; OP; dpars=separated_list(COMMA,param); CP; bloc {()}
+;
 decl_meth:
- | t=typ; id=IDENT; OP; dats=separated_list(COMMA,decl_att); CP; bloc {()}
+ | t=typ; id=IDENT; OP; dats=separated_list(COMMA,param); CP; bloc {()}
 ;
 decl_att:
- | t=typ; id=IDENT {(*(id,t*)()}
+ | t=typ; id=IDENT; SEMI; {(*(id,t*)()}
+ ;
+param:
+ | t=typ; id=IDENT {()}
 ;
+acces:
+ | id=IDENT; PT; id2=IDENT {()}
+; 
 typ:
  | INT {(*TypInteger*)()}
- (*| STRING {(*TypString*)()}*)
+ | STRING {(*TypString*)()}
  | BOOL {(*TypBoolean*)()}
  | VOID {()}
 ;
 expression:
- | loc=location {(*Literal(lit)*)()}
  | lit=literal { (*Literal(lit)*)()}
+ | id=IDENT {()}
+ | NEQ; lit=literal {()}
+ | MINUS; lit=literal {()}
  | e1=expression; bop=binop; e2=expression  { (*Binop(bop, e1, e2)*)() }
+ | e=expression; INSTOF; id=IDENT {()}
+ | OP; id=IDENT; CP;e= expression {()}
+ | OP; INT; CP; e=expression {()}
+ | OP; BOOL; CP e=expression {()}
+ | ie=instr_expr {()}
+ | ac=acces {()}
+ | OP; e=expression; CP {()}
+
 ;
 literal:
  | i=CONST_INT {(*Int i*)()}
  | b=CONST_BOOL {(*bool b*)()}
-;
-location:
- | id=IDENT {(*identifier(id)*)()}
+ | s=CONST_STRING {()}
+ | NULL {()}
 ;
 
 %inline binop:
