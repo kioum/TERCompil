@@ -37,7 +37,7 @@
 let alpha = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 (* EXPRESSION RÉGULIÈRE POUR LES CHIFFRES *)
-let ident = alpha (alpha | '_' | '\'' | digit)*  
+let ident = alpha (alpha | '_' | '\'' | digit)*
   
   (* RÈGLES RÉCURSIVES *)
   
@@ -51,9 +51,11 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
   | "(*"
       { comment lexbuf; token lexbuf }
   | digit+
-      { CONST_INT (int_of_string (lexeme lexbuf)) }
+      { CONST_INT (Int32.of_string (lexeme lexbuf)) }
   | ident
       { id_or_keyword (lexeme lexbuf) }
+  | '"'
+      { lire_string (Buffer.create 17) lexbuf }
   | "("
       { OP }
   | ")"
@@ -108,6 +110,32 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
 	raise (Lexical_error "Caractère invalide")
       }
       
+and lire_string buf = parse
+    | '"'
+	{ CONST_STRING (Buffer.contents buf) }
+    | '\\' '/'
+	{ Buffer.add_char buf '/'; lire_string buf lexbuf }
+    | '\\' '\\'
+	{ Buffer.add_char buf '\\'; lire_string buf lexbuf }
+    | '\\' 'b'
+	{ Buffer.add_char buf '\b'; lire_string buf lexbuf }
+    | '\\' 'f'
+	{ Buffer.add_char buf '\012'; lire_string buf lexbuf }
+    | '\\' 'n'
+	{ Buffer.add_char buf '\n'; lire_string buf lexbuf }
+    | '\\' 'r'
+	{ Buffer.add_char buf '\r'; lire_string buf lexbuf }
+    | '\\' 't'
+	{ Buffer.add_char buf '\t'; lire_string buf lexbuf }
+  | [^ '"' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      lire_string buf lexbuf
+    }
+  | _
+      { raise (Lexical_error ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }
+  | eof
+      { raise (Lexical_error ("String is not terminated")) }
+  
 and comment = parse
     | ['\n']
 	{ new_line lexbuf; comment lexbuf }
