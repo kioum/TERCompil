@@ -1,5 +1,5 @@
 %{
-
+(* let mk_loc p e = *)
 %}
   
 (* Déclaration des tokens *)
@@ -46,14 +46,13 @@
 %token THIS
 %token VOID
 
-
 %token EOF 
 
 
 (* Déclaration des priorités*)
 
 
-(*
+
 %right SET
 %left OR
 %left AND
@@ -63,13 +62,12 @@
 %left MULT DIV MOD
 %right NOT PUN MUN NEG CAST
 %left PT
-*)
 
-/* SYMBOLE DE DÉPART DE LA GRAMMAIRE : ON DONNE SON NOM ET SON TYPE
+
+(* SYMBOLE DE DÉPART DE LA GRAMMAIRE : ON DONNE SON NOM ET SON TYPE
    (QUI SERA LE TYPE DES PROGRAMMES DANS L'AST)
-
   IL FAUT REMPLACER 'unit' CI-DESSOUS PAR LE TYPE DE L'AST.
-*/
+*)
    
 %start prog
 %type < unit > prog (* ? *)
@@ -79,17 +77,72 @@
       (* RÈGLES DE GRAMMAIRE *)
 
 prog:
-   |cds=class_decls; mcd=main_class_decl; EOF { (*cds@mcd*)() }
+   |cds=class_defs; mcd=main_class_def; EOF { (*cds@mcd*)() }
 ;
   
-main_class_decl:
-  PUBLIC; CLASS; id=IDENT; OA;
-PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP; (* bloc*) CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
+main_class_def:
+ | PUBLIC; CLASS; id=IDENT; OA;
+PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP;
+bloc;CA {(*id*)(if main<>"main" || str <>"String" then $syntaxerror);()}
 ;
-class_decls:
-  cds=list(class_decl) {(*cds*)()}
+class_defs:
+ | cds=list(class_def) {(*cds*)()}
 ;
-class_decl:
- |CLASS; id=IDENT; OA; (* bloc *) CA {(*id*)()}
- |CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; (* bloc *) CA {(*(id;id2)*)()}
+class_def:
+ | CLASS; id=IDENT; bloc; {(*id*)()}
+ | CLASS; id=IDENT; EXTENDS; id2=IDENT; bloc; {(*(id;id2)*)()}
+;
+bloc:
+ | OA; is=instructions; CA {(*is*)()}
+;
+instructions:
+ | inst=list(instruction) {(*inst*)() }
+;
+instruction:
+ | l=location; SET; e=expression; SEMI {(*Set(l,e)*)()}
+ | id=IDENT; MUN; SEMI {()}
+ | id=IDENT; PUN; SEMI {()}
+ | datt=decl_att; SEMI {()}
+ | dmet=decl_meth; {()}
+ | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}
+ | RETURN; e=expression; SEMI {()}
+ | RETURN; SEMI {()}
+;
+decl_meth:
+ | t=typ; id=IDENT; OP; dats=separated_list(COMMA,decl_att); CP; bloc {()}
+;
+decl_att:
+ | t=typ; id=IDENT {(*(id,t*)()}
+;
+typ:
+ | INT {(*TypInteger*)()}
+ (*| STRING {(*TypString*)()}*)
+ | BOOL {(*TypBoolean*)()}
+ | VOID {()}
+;
+expression:
+ | loc=location {(*Literal(lit)*)()}
+ | lit=literal { (*Literal(lit)*)()}
+ | e1=expression; bop=binop; e2=expression  { (*Binop(bop, e1, e2)*)() }
+;
+literal:
+ | i=CONST_INT {(*Int i*)()}
+ | b=CONST_BOOL {(*bool b*)()}
+;
+location:
+ | id=IDENT {(*identifier(id)*)()}
+;
+
+%inline binop:
+    | PLUS   { (*Add*) ()}
+    | MINUS  { (*Sub*) ()}
+    | MULT   { (*Mult*)()}
+    | EQUAL  { (*Eq*)  ()}
+    | NEQ    { (*Neq*) ()}
+    | LT     { (*Lt *) ()}
+    | LE     { (*Le *) ()}
+    | MT     { (*Mt *) ()}
+    | ME     { (*Me *) ()}
+    | AND    { (*And*) ()}
+    | OR     { (*Or*)  ()}
 ;
