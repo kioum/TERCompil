@@ -42,7 +42,8 @@ type token =
   | ELSE
   | DIV
   | CP
-  | CONST_INT of (int)
+  | CONST_STRING of (string)
+  | CONST_INT of (int32)
   | CONST_BOOL of (bool)
   | COMMA
   | CLASS

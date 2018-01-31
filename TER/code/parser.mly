@@ -126,6 +126,10 @@ instr_expr:
  | PUN; ac=acces {()}
  | ac=acces; MUN {()}
  | ac=acces; PUN {()}
+ | id=IDENT; MUN {()}
+ | id=IDENT; PUN {()}
+ | MUN; id=IDENT {()}
+ | PUN; id=IDENT {()}
  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP {(*New(id,l)*)()}
 ;
 appel:
