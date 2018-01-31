@@ -6,6 +6,7 @@ type token =
   | VOID
   | VAR
   | THIS
+  | STRING
   | STATIC
   | SET
   | SEMI

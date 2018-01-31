@@ -1,5 +1,6 @@
 class A1{
     int truc;
+    string t;
     
     A1(int i){
 	A1.truc=i;

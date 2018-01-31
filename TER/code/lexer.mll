@@ -13,6 +13,7 @@
 	"else",     ELSE;
 	"int",      INT;
 	"boolean",  BOOL;
+	"string", STRING;
 	"class",    CLASS;
 	"extends",  EXTENDS;
 	"for",      FOR;

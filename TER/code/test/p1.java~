@@ -1,12 +1,17 @@
 class A1{
-    truc=1;
+    int truc;
+    
+    A1(int i){
+	A1.truc=i;
+	return;
+    }
 
 }
 class A2{
-    truc++;
+    
 }
 class B{
-    truc=truc+truc;
+  
 }
 class A_A1{
     int i; 
@@ -15,6 +20,9 @@ class B_A1{
     void machin (int c){
 	return;
     }
+}
+class A_A1{
+     
 }
 public class p1 {
     public static void main(String truc []){

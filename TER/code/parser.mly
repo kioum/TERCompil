@@ -28,7 +28,7 @@
 %token SET
 
 %token VAR
-%token INT BOOL
+%token INT BOOL STRING
 %token NULL
 
 %token PRINT
@@ -159,6 +159,7 @@ typ:
  | INT {(*TypInteger*)()}
  (*| STRING {(*TypString*)()}*)
  | BOOL {(*TypBoolean*)()}
+ | STRING {()}
  | VOID {()}
 ;
 expression:
