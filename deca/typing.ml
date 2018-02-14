@@ -5,9 +5,9 @@ type local_env = (ident * typ) list
 
 let type_const c =
   match c with
-  |Cint _ -> Tint
-  |Cbool _ -> Tbool
-  |Cstring _ -> TClass "String"
+  | Cint _ -> TypInteger
+  | Cbool _ -> TypBoolean
+  | Cstring _ -> TypClass "String"
   
 (* A completer binop *)
 let type_binop = function
@@ -15,7 +15,11 @@ let type_binop = function
   | Eq  | Neq | Lt  | Le -> TypInteger, TypBoolean
   | And | Or             -> TypBoolean, TypBoolean
 
-let rec type_expression env, e =
+let type_access env a =
+  match a.node with
+  | Aident id -> { node = Aident id; info = }
+  
+let type_expression env e =
   match e.node with 
   | Econst c  -> { node = Econst c; info = type_const c; } 
   | Eaccess   ->
