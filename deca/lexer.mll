@@ -84,6 +84,8 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { PLUS }
   | "-"
       { MINUS }
+  | "/"
+      { DIV }
   | "!"
       { NOT }
   | "*"

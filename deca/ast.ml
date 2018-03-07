@@ -16,7 +16,6 @@ and 'info class_def = {
   name: ident;
   extends: ident;
   decls: 'info decl;
-  instructions: 'info block;
 }
 
 and 'info decl =
@@ -35,6 +34,7 @@ and 'info block = 'info instruction list
   
 and 'info instr =
     Iskip
+  | Idecl of typ * ident
   | Iblock of 'info block
   | Iset   of 'info access * 'info expression                              (* Affectation       *)
   | Ifor   of 'info expression option * 'info expression option * 'info expression option * 'info block        (* Boucle For        *)
@@ -50,6 +50,7 @@ and 'info expr_ =
   | Eunop      of binop * 'info expression              (* Opération unaire    *)   
   | EfunCall   of 'info call                            (* Appel de fonction   *)
   | EinstOf of 'info expression * ident
+  | Ecast of typ * 'info expression
   | Enew of ident * 'info expression list
   | Epreincr of incr * 'info access
   | Epostincr of 'info access * incr
@@ -57,7 +58,7 @@ and 'info expr_ =
 and 'info call = string * 'info expression option list (* Appel de fonction *)
   
 and const =
-  | Cint  of int      (* Constante entière   *)
+  | Cint  of int32(* Constante entière   *)
   | Cbool of bool     (* Constante booléenne *)
   | Cstring of string (* Constante String    *)
   | Cnull             (* variable null       *)
@@ -72,7 +73,7 @@ and 'info access =
 and binop =
   | Add (* +  *) | Mult (* *  *) | Sub (* - *)
   | Eq  (* == *) | Neq  (* != *) | Modulo (* % *)
-  | Lt  (* <  *) | Le   (* <= *)
+  | Lt  (* <  *) | Le   (* <= *) | Div (* / *)
   | Mt  (* >  *) | Me   (* >= *) 
   | And (* && *) | Or   (* || *)
 
