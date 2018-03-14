@@ -1,7 +1,7 @@
 ast.cmo :
 ast.cmx :
-typing.cmo :
-typing.cmx :
+typing.cmo : type_class.cmo ast.cmo
+typing.cmx : type_class.cmx ast.cmx
 parser.cmi :
 parser.cmo : parser.cmi
 parser.cmx : parser.cmi
@@ -9,3 +9,6 @@ lexer.cmo : parser.cmi
 lexer.cmx : parser.cmx
 main.cmo : parser.cmi lexer.cmo
 main.cmx : parser.cmx lexer.cmx
+parser.cmo : parser.cmi
+parser.cmx : parser.cmi
+parser.cmi :

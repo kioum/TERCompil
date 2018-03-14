@@ -65,10 +65,11 @@ and const =
 
 and 'info access =
   | Aident of ident
-  | Athis of ident
+  (*| Athis of ident
   | Acall of 'info call * ident
   | Aaccess of 'info access * ident
-  | Aexpr of 'info expression * ident
+    | Aexpr of 'info expression * ident*)
+  | Afield of 'info expression * ident
       
 and binop =
   | Add (* +  *) | Mult (* *  *) | Sub (* - *)
