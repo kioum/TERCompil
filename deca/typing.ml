@@ -13,7 +13,7 @@ let type_const c =
 let type_binop t1 t2 op =
   match op with
   | Eq  | Neq                 -> if t1 == t2 then TypBoolean else failwith "Erreur de typage"
-  | Mt  | Me | Lt | Le        -> if t1 = TypInteger && t1 = TypInteger then TypBoolean
+  | Mt  | Me | Lt | Le        -> if t1 = TypInteger && t1 = TypInteger then TypBoolean else failwith "Erreur de typage"
   | Sub | Mult | Div | Modulo -> (*TypInteger, *) TypInteger
   | And | Or                  -> (*TypBoolean, *) TypBoolean
   | _ -> failwith "unknow binop"
@@ -26,7 +26,7 @@ let rec type_expression env e =
   | Ecast (typ, e) ->
      if not (Type_class.wf typ) then failwith "error";
     let te = type_expression env e in
-    if not (compatible typ te.info) then failwith "error";
+    if not (Type_class.compatible typ te.info) then failwith "error";
     {info = typ; node = Ecast (typ, te)} 
   | Ebinop (e1, op, e2) ->
      let te1 = type_expression env e1 in
@@ -54,14 +54,14 @@ and type_access env a =
          failwith "todo"
      end
   | Afield (e,id) ->
-     let te = type_expresion env e in
+     let te = type_expression env e in
      match te.info with
-     | Tint  | Tboolean | Tvoid | Tnull -> failwith "invalide acces"
-     | Tclass cls ->
+     | TypInteger  | TypBoolean | TypVoid | TypNull -> failwith "invalide acces"
+     | TypClass cls ->
         begin
           match Type_class.select_field cls id with
           | Some ((tid, _)) ->
-             (Afield (te,tid), tid)
+             (Afield (te, id), tid)
           | None -> failwith "Champs manquant"
         end
           
@@ -77,16 +77,22 @@ let rec type_instr env i =
      env, {node = Iset(ta, te); info = TypVoid; }
   | Iif (e, b) -> 
      let te = type_expression env e in
-     let tb = type_block env b in
+     let _, tb = type_block env b in
      env, {node = Iif(te, tb); info = TypVoid; }
-       
-  (*
-  | Ifor   of 'info expression option * 'info expression option * 'info expression option * 'info block 
-  | Iifelse    of 'info expression * 'info block * 'info block       
-    | IprocCall of 'info call *)
+  | Iifelse (e, b1, b2) -> 
+     let te = type_expression env e in
+     let _, tb1 = type_block env b1 in
+     let _, tb2 = type_block env b2 in
+     env, {node = Iifelse(te, tb1, tb2); info = TypVoid; }
+  (*| Ifor(e1, e2, e3, b) ->
+     let te1 = type_expression env e1 in
+     let te2 = type_expression env e2 in
+     let te3 = type_expression env e3 in
+     let _, tb = type_block env b in
+    env, {node = ifor(te1, te2, te3, tb); info = TypVoid; }*)
+  (*  | IprocCall of 'info call *)
   |Idecl (typ, id) ->
-      (id, typ) :: env, {node = Idecl (typ, id);info = typ}
-       
+      (id, typ) :: env, {node = Idecl (typ, id);info = typ}  
   | Ireturn (Some e) ->
      let te = type_expression env e in
      env, {node = Ireturn (Some (te)); info = te.info;}
@@ -105,8 +111,7 @@ let type_prog (classes, main) =
   (* verifier typage des classes TODO *)
   Type_class.init_class_env classes;
   (*typage de main *)
-  let _, _,body = main in
-  let _, tbody = type_block [] body in
-  tbody
+  let _, tbody = type_block [] main.instructions in
+  [], {name=main.name; params = main.params; instructions = tbody}
     
     

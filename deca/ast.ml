@@ -15,7 +15,7 @@ and ident = string
 and 'info class_def = {
   name: ident;
   extends: ident;
-  decls: 'info decl;
+  decls: 'info decl list;
 }
 
 and 'info decl =
@@ -28,6 +28,7 @@ and typ =
   | TypBoolean
   | TypClass of ident
   | TypVoid
+  | TypNull
       
 (* Un bloc de code est une liste d'instructions *)
 and 'info block = 'info instruction list

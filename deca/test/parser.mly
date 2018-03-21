@@ -1,7 +1,6 @@
 %{
 (* let mk_loc p e = *)
   open Printf
-  open Ast
 %}
   
 (* Déclaration des tokens *)
@@ -72,7 +71,7 @@
 *)
 
 %start prog
-%type < 'info program > prog (* ? *)
+%type < unit > prog (* ? *)
     
 %%
 

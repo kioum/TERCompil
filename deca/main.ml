@@ -30,9 +30,13 @@ let () =
   let c = open_in file in
   let lb = Lexing.from_channel c in
   try
-    let _p = Parser.prog Lexer.token lb in
-    close_in c;
+    let p = Parser.prog Lexer.token lb in
     if !parse_only then exit 0;
+    let t = Typing.type_prog p in
+    let code = Compile.compile_prog t in
+    close_in c;
+    let ofile = (Filename.chop_suffix file ext) ^ ".s" in
+    Amd64.print_in_file~file:ofile code
   with
   | Lexer.Lexical_error s -> print_pos lb; Format.eprintf "Lexical error\n%!";
       exit 1

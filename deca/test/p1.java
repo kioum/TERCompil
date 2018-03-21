@@ -29,10 +29,13 @@ public class p1 {
     public static void main(String truc []){
 	int truc;
 	int truc2;
+    boolean machin;
     string n;
 n = " // ";
 	truc=1;
 	truc=truc+truc2;
 	new A1(1,2,3);
+    if (n) {
+        
     }
 }
