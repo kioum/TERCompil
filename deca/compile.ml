@@ -6,10 +6,26 @@ let gen_label =
   fun () -> incr count;
     Printf.sprintf "__label__%05d" ! count
 
+let str_table = Hashtbl.create 17
+  
 (* Le résultat de l'expression est stocké dans ras/eax *)
 let rec compile_expr env e =
   match e.node with
     Econst Cint i -> movl ~$(Int32.to_int i) ~%eax
+  | Econst Cstring str ->
+     let label =
+     try
+       Hashtbl.find str_table str
+     with Not_found ->
+       let new_label = "__str" ^ (gen_label()) in
+       Hashtbl.add str_table str new_label;
+       new_label
+in
+movq ~$24 ~%rdi ++
+  call "malloc" ++
+  movq ~$1234 (addr ~%rax) ++
+  movq ~:label (addr ~ofs:8 ~%rax)++
+  movq ~$(String.length str) (addr ~ofs:16 ~%rax)
   | Econst Cbool true -> movl ~$1 ~%eax
   | Econst Cbool false -> xorl ~%eax ~%eax
   | Econst Cnull -> xorq ~%rax ~%rax
@@ -48,7 +64,11 @@ and expr_calcul code1 code2 =
     code2++
     popq ~%r9
           
-and compile_access env a = assert false    
+and compile_access env a =
+  match a with
+  |Aident id -> failwith "todo ident"
+  |Afield (e, id) -> failwith "todo field"
+  | _ -> failwith "t naze"
           
           
 let rec compile_block exit_lbl min_rbp cur_rbp env tbody =
@@ -66,10 +86,13 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
     Iskip ->
       min_rbp, cur_rbp, env, nop
   | Iblock bl -> compile_block exit_lbl min_rbp cur_rbp env bl
-  | Idecl(_, id (*,oe *)) -> failwith "todo"
-  (* match oe withœ
-     |None -> (* init œdefault *)failwith "todo"
-     |Some e -> compile_expr env e *)
+  | Idecl(_, id , oe) ->
+     begin
+       match oe with
+       |None -> failwith "ici"(* init default *)
+       |Some e -> let ecode = compile_expr env e in
+                  min_rbp, cur_rbp, env, ecode
+     end
   (*| Ireturn e ->
        match e with 
     |None -> min_rbp cur_rbp env nop++ jmp lbl_exit
@@ -126,10 +149,10 @@ let compile_prog (classes, { instructions = tbody }) =
   in
 
 
-  let code = nop in
-  let data = nop
-   (* label "hello_world_str" ++
-      string "Hello, World !\n"*)
+  let code = code_main in
+  let data = nop ++
+    (Hashtbl.fold (fun str lbl a_code -> a_code ++ label lbl ++ string str) str_table nop)
+    
   in
   {
     text = code;

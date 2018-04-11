@@ -35,7 +35,7 @@ and 'info block = 'info instruction list
   
 and 'info instr =
     Iskip
-  | Idecl of typ * ident
+  | Idecl of typ * ident * 'info expression option
   | Iblock of 'info block
   | Iset   of 'info access * 'info expression                              (* Affectation       *)
   | Ifor   of 'info expression option * 'info expression option * 'info expression option * 'info block        (* Boucle For        *)

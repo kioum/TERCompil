@@ -41,6 +41,7 @@ let () =
   | Lexer.Lexical_error s -> print_pos lb; Format.eprintf "Lexical error\n%!";
       exit 1
   | Parser.Error -> print_pos lb; Format.eprintf "Syntax error\n%!";
-      exit 1
-  | e -> Format.eprintf "Anomaly\n";
-                       exit 2
+    exit 1
+  | e ->
+     Format.eprintf "Anomaly: %s\n%!" (Printexc.to_string e);
+    exit 2

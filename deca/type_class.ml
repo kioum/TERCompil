@@ -98,7 +98,7 @@ let select_method cls meth targs =
   match candidates with
     [] -> None
   | [l] -> Some l
-  | _ -> failwith "odo"
+  | _ -> failwith "Todo"
 
 let for_all2 f l1 l2 =
   try

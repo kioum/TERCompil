@@ -102,7 +102,7 @@ instruction:
  (* | ie=instr_expr; SEMI {ie}	 *)  
  | ac=acces; SET; e=expr; SEMI {Iset(ac,e)}
  (* | id=IDENT; SEMI {id}*)
- | t=typ; id=IDENT; SEMI {Idecl(t,id)}
+ | t=typ; id=IDENT; SET; e=option(expr); SEMI {Idecl(t,id, e)}
  | IF; OP; e=expr; CP; b=bloc; {Iif(e,b)}
  | IF; OP; e=expr; CP; b1=bloc; ELSE; b2=bloc {Iifelse(e,b1,b2)}
  | FOR; OP; e1= option (expr); COMMA; e2=option(expr); COMMA; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
@@ -124,7 +124,7 @@ instr_expr:
  (*| ap=appel; {EfunCall(ap)}*)
  | i=incr; ac=acces {Epreincr(i,ac) }
  | ac=acces; i=incr {Epostincr(ac,i)} (********************************)
- (*| lit=literal { Literal(lit) }*)
+ | lit=literal { Econst(lit) }
  (*| id=IDENT {id}*)
  (*| MINUS; lit=literal {Eunop(MINUS,lit)}*)
  | e1=expr; bop=binop; e2=expr { Ebinop(e1,bop, e2) }
@@ -135,10 +135,7 @@ instr_expr:
  (*| OP; e=expr; CP {e}************************************************)
  (*| ac=acces; i=incr {Epostincr(i,id)}
    | i=incr; ac=aces {Epreincr(i,id) }*)
-(* | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP {Enew(id,l)}*)
-;
-appel:
- | ac=acces; OP; le=list(expr) {(ac,le)}
+ | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
 ;
 decl:
  | dc=decl_constr {dc}

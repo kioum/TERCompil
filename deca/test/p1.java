@@ -1,41 +1,7 @@
-class A1{
-    int truc;
-    A1(int i){
-	A1.truc=i;
-	return;
-    }
-
-}
-class A2{
-    
-}
-class B{
-  
-}
-class A_A1{
-    int i; 
-}
-class B_A1{
-    void machin (int c){
-	return;
-    }
-}
-class A_A1{
-     
-}
 public class p1 {
-/* */
-// coucou
-    public static void main(String truc []){
-	int truc;
-	int truc2;
-    boolean machin;
-    string n;
-n = " // ";
-	truc=1;
-	truc=truc+truc2;
-	new A1(1,2,3);
-    if (n) {
-        
+    public static void main(String args []){
+	    int truc = 1;
+        if (truc == 1) {
+        }
     }
 }

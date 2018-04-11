@@ -1,4 +1,5 @@
 open Ast
+open Type_class
 
 (** corriger du prog **)
 type local_env = (ident * typ) list
@@ -13,7 +14,7 @@ let type_const c =
 let type_binop t1 t2 op =
   match op with
   | Eq  | Neq                 -> if t1 == t2 then TypBoolean else failwith "Erreur de typage"
-  | Mt  | Me | Lt | Le        -> if t1 = TypInteger && t1 = TypInteger then TypBoolean else failwith "Erreur de typage"
+  | Mt  | Me | Lt | Le        -> if t1 == TypInteger && t1 == TypInteger then TypBoolean else failwith "Erreur de typage"
   | Sub | Mult | Div | Modulo -> (*TypInteger, *) TypInteger
   | And | Or                  -> (*TypBoolean, *) TypBoolean
   | _ -> failwith "unknow binop"
@@ -51,7 +52,7 @@ and type_access env a =
        with Not_found ->
          (* select field *)
          
-         failwith "todo"
+         failwith "todo mdr"
      end
   | Afield (e,id) ->
      let te = type_expression env e in
@@ -73,8 +74,11 @@ let rec type_instr env i =
      env, {node = Iblock(tb); info = TypVoid; }
   | Iset (a, e) ->
      let te = type_expression env e in
-     let ta, typ = type_access env a in 
-     env, {node = Iset(ta, te); info = TypVoid; }
+     let ta, typ = type_access env a in
+     if Type_class.subType te.info typ then 
+       env, {node = Iset(ta, te); info = typ; }
+     else
+       failwith "Erreur de type affectation";
   | Iif (e, b) -> 
      let te = type_expression env e in
      let _, tb = type_block env b in
@@ -91,8 +95,13 @@ let rec type_instr env i =
      let _, tb = type_block env b in
     env, {node = ifor(te1, te2, te3, tb); info = TypVoid; }*)
   (*  | IprocCall of 'info call *)
-  |Idecl (typ, id) ->
-      (id, typ) :: env, {node = Idecl (typ, id);info = typ}  
+  |Idecl (typ, id, oe) ->
+     begin
+       match oe with
+       |None -> (id, typ) :: env, {node = Idecl (typ, id, None);info = typ}
+       |Some e -> let te = type_expression env e in
+                  (id, typ) :: env, {node = Idecl (typ, id, Some te);info = typ}
+     end
   | Ireturn (Some e) ->
      let te = type_expression env e in
      env, {node = Ireturn (Some (te)); info = te.info;}
