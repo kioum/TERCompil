@@ -59,7 +59,7 @@ and 'info expr_ =
 and 'info call = string * 'info expression option list (* Appel de fonction *)
   
 and const =
-  | Cint  of int32(* Constante entière   *)
+  | Cint  of int32    (* Constante entière   *)
   | Cbool of bool     (* Constante booléenne *)
   | Cstring of string (* Constante String    *)
   | Cnull             (* variable null       *)

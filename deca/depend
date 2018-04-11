@@ -2,7 +2,7 @@ amd64.cmo : amd64.cmi
 amd64.cmx : amd64.cmi
 ast.cmo :
 ast.cmx :
-parser.cmi :
+parser.cmi : ast.cmo
 parser.cmo : ast.cmo parser.cmi
 parser.cmx : ast.cmx parser.cmi
 lexer.cmo : parser.cmi
@@ -11,11 +11,11 @@ type_class.cmo : ast.cmo
 type_class.cmx : ast.cmx
 typing.cmo : type_class.cmo ast.cmo
 typing.cmx : type_class.cmx ast.cmx
-compile.cmo :
-compile.cmx :
+compile.cmo : ast.cmo amd64.cmi
+compile.cmx : ast.cmx amd64.cmx
 main.cmo : typing.cmo parser.cmi lexer.cmo compile.cmo amd64.cmi
 main.cmx : typing.cmx parser.cmx lexer.cmx compile.cmx amd64.cmx
 parser.cmo : ast.cmo parser.cmi
 parser.cmx : ast.cmx parser.cmi
-parser.cmi :
+parser.cmi : ast.cmo
 parser.ml parser.mli: ast.cmo

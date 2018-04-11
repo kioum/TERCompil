@@ -1,10 +1,16 @@
 open Ast
 
+(*type method_desc
+  
+  def ident
+  oveeride
+*)
 type class_info = {
     class_name : ident;
     class_parent : ident;
     class_fields : (ident * (typ*ident)) list;
     class_methods: (ident * (typ* (typ * ident) list * ident)) list;
+(*class_constr : (ident*method_desc) list;*)
     
 }
   
@@ -92,4 +98,16 @@ let select_method cls meth targs =
   match candidates with
     [] -> None
   | [l] -> Some l
-  | _ -> failwith "todo"
+  | _ -> failwith "odo"
+
+let for_all2 f l1 l2 =
+  try
+    List.for_all2 f l1 l2
+  with Invalid_argument _ -> false
+
+    
+(*
+strict subtype:
+not (equal type t1 t2 && subtype t1 t2
+
+*)

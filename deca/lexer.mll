@@ -25,6 +25,7 @@
 	"void",     VOID;
 	"instanceof", INSTOF;
 	"null",     NULL;
+    "System.out.prinln", PRINTLN
       ] ;
     fun s ->
       try  Hashtbl.find h s

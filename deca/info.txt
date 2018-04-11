@@ -1,0 +1,9 @@
+compile_expr env e :
+| Econst -> ok
+| Eval l ->
+    compile_acces env l ++
+    movq (%rax) %rax
+
+compile_access env l:
+leaq (load effective address)
+adresse de l %rax
