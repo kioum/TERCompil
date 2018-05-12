@@ -3,43 +3,70 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	addq $-8, %rsp
+	addq $0, %rsp
 	movl $1, %eax
-	negl %eax
 	movq %rax, -8(%rbp)
-	xorl %eax, %eax
+	movl $1, %eax
 	movq %rax, -16(%rbp)
+	movl $1, %eax
+	movq %rax, -24(%rbp)
+	movl $1, %eax
+	movq %rax, -32(%rbp)
 	movq -16(%rbp), %rax
-	cmpl $0, %eax
-	jne __label__00003
-	movl $1, %eax
-	jmp __label__00004
-__label__00003:
-	xorl %eax, %eax
-__label__00004:
-	cmpl $0, %eax
-	je __label__00008
-	movq -8(%rbp), %rax
-	pushq %rax
-	movl $1, %eax
-	negl %eax
-	popq %r9
-	cmpl %eax, %r9d
-	je __label__00007
-	movl $0, %eax
-__label__00007:
-__label__00008:
-	cmpl $0, %eax
-	je __label__00010
-	movq -8(%rbp), %rax
-	pushq %rax
-	movl $3, %eax
-	popq %r9
-	addl %r9d, %eax
-	movq %rax, -8(%rbp)
-__label__00010:
-	movq -8(%rbp), %rax
+	addl $1, %eax
+	movq %rax, -16(%rbp)
 	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00001, 8(%rax)
+	movq $1, 16(%rax)
+	call __builtin_print_String
+	movq -16(%rbp), %rax
+	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00002, 8(%rax)
+	movq $2, 16(%rax)
+	call __builtin_print_String
+	movq -24(%rbp), %rax
+	subl $1, %eax
+	movq %rax, -24(%rbp)
+	addl $1, %eax
+	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00001, 8(%rax)
+	movq $1, 16(%rax)
+	call __builtin_print_String
+	movq -24(%rbp), %rax
+	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00002, 8(%rax)
+	movq $2, 16(%rax)
+	call __builtin_print_String
+	movq -32(%rbp), %rax
+	subl $1, %eax
+	movq %rax, -32(%rbp)
+	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00001, 8(%rax)
+	movq $1, 16(%rax)
+	call __builtin_print_String
+	movq -32(%rbp), %rax
+	call __builtin_print_int
+	movq $24, %rdi
+	call malloc
+	movq $1234, 0(%rax)
+	movq $__str__label__00002, 8(%rax)
+	movq $2, 16(%rax)
+	call __builtin_print_String
 __exit_main:
 	movq %rbp, %rsp
 	popq %rbp
@@ -81,6 +108,10 @@ __builtin_div0_error:
 	movq $1, %rdi
 	call exit
 .data
+__str__label__00002:
+	.string " \n"
+__str__label__00001:
+	.string " "
 #Définitions des constantes
 __str_true:
 	.string "true"

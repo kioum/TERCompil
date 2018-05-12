@@ -44,6 +44,7 @@ and 'info instr =
   | IprocCall of 'info call                                              (* Appel de fonction *)
   | Iprint of 'info expression option
   | Ireturn of 'info expression option
+  | Iexpr of 'info expression
 
 and 'info expr_ =
   | Econst    of const                         (* Valeur immédiate    *)
@@ -56,6 +57,7 @@ and 'info expr_ =
   | Enew of ident * 'info expression list
   | Epreincr of incr * 'info access
   | Epostincr of 'info access * incr
+  | Einst of 'info instruction
       
 and 'info call = string * 'info expression option list (* Appel de fonction *)
   

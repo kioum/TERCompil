@@ -13,11 +13,7 @@ typing.cmo : type_class.cmo ast.cmo
 typing.cmx : type_class.cmx ast.cmx
 compile_builtin.cmo : amd64.cmi
 compile_builtin.cmx : amd64.cmx
-compile.cmo : compile_builtin.cmo ast.cmo amd64.cmi
-compile.cmx : compile_builtin.cmx ast.cmx amd64.cmx
+compile.cmo :
+compile.cmx :
 main.cmo : typing.cmo parser.cmi lexer.cmo compile.cmo amd64.cmi
 main.cmx : typing.cmx parser.cmx lexer.cmx compile.cmx amd64.cmx
-parser.cmo : ast.cmo parser.cmi
-parser.cmx : ast.cmx parser.cmi
-parser.cmi : ast.cmo
-parser.ml parser.mli: ast.cmo

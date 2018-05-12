@@ -52,6 +52,21 @@ movq ~$24 ~%rdi ++
 	  xorl ~%eax ~%eax ++
 	  label lbl_true
      end
+  | Epreincr(incr, a) -> let pos_rbp = compile_access env a in
+			 movq (addr ~ofs:pos_rbp ~%rbp) ~%rax ++
+			   (match incr with
+			   |Pun -> addl ~$1 ~%eax
+			   |Mun -> subl ~$1 ~%eax) ++
+			    movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp) 
+  | Epostincr(a, incr) -> let pos_rbp = compile_access env a in
+			  movq (addr ~ofs:pos_rbp ~%rbp) ~%rax ++
+			    (match incr with
+			    |Pun -> addl ~$1 ~%eax
+			    |Mun -> subl ~$1 ~%eax) ++
+			    movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp) ++
+			    (match incr with
+			    |Pun -> subl ~$1 ~%eax
+			    |Mun -> addl ~$1 ~%eax)
   | Ebinop(e1, op, e2) ->
      let code1 = compile_expr env e1 in
      let code2 = compile_expr env e2 in
@@ -82,7 +97,7 @@ movq ~$24 ~%rdi ++
      | Add ->
 	begin
 	  if(e1.info == TypClass "String" || e2.info == TypClass "String") then
-	    failwith "todo toString"
+	    failwith "Todo add string"
 	  else
 	    expr_calcul code1 code2 ++
 	      addl ~%r9d ~%eax
@@ -130,18 +145,22 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
        |None -> min_rbp, cur_rbp-8, (id, cur_rbp-8)::env, nop
        |Some e ->
 	  let ecode = compile_expr env e in
+	  let decalage = (match e.info with
+	    |TypInteger -> 8
+	    |TypBoolean -> 8
+	    |TypClass "String" -> 16) in
 	  let declcode =
 	    ecode ++
-	      movq ~%rax (addr ~ofs:(cur_rbp-8) ~%rbp)
+	      movq ~%rax (addr ~ofs:(cur_rbp-decalage) ~%rbp)
 	  in
-	  min_rbp, cur_rbp-8, (id, cur_rbp-8)::env, declcode
+	  min_rbp, cur_rbp-decalage, (id, cur_rbp-decalage)::env, declcode
      end
   |Iset(a, e) -> let ecode = compile_expr env e in
 		 let pos_rbp = compile_access env a in
 		 let setcode = ecode ++
 		   movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp)
 		 in
-		 min min_rbp pos_rbp, cur_rbp, env, setcode 
+		 min_rbp, cur_rbp, env, setcode 
   (*| Ireturn e ->
        match e with 
     |None -> min_rbp cur_rbp env nop++ jmp lbl_exit
@@ -178,12 +197,17 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
          label lbl_next
      in
      min min_rbp1 min_rbp, cur_rbp, env, ifcode
+   | Ifor(oe1, oe2, oe3) -> let lbl_boucle = gen_label() in
+        let forcode = 
+           (match oe1 with
+             |None -> nop
+             |Some e -> compile_expr env e) ++
+             label lbl_boucle ++
+           (match oe2 with
    | Iprint (oe) ->
       begin
 	match oe with
-	| None -> let printcode = ret
-		  in
-		  min_rbp, cur_rbp, env, printcode
+	| None -> min_rbp, cur_rbp, env, nop
 	| Some e -> let ecode = compile_expr env e in
 		    let printcode =
 		      ecode ++
@@ -214,7 +238,7 @@ let compile_prog (classes, { instructions = tbody }) =
       movq ~$0 ~%rax ++
       ret 
   in
-
+-
 
   let code = code_main ++ 
     builtins

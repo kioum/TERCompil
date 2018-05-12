@@ -95,13 +95,13 @@ instr_:
  | i = instruction     { mk_loc ($startpos, $endpos) i }
 ;
 instruction:
- (* | ie=instr_expr; SEMI {ie}	 *)  
+ (*| ie=instr_expr; SEMI {ie}  *)
  | ac=acces; SET; e=expr; SEMI {Iset(ac,e)}
  (* | id=IDENT; SEMI {id}*)
  | t=typ; id=IDENT; e=affectation {Idecl(t,id, e)}
  | IF; OP; e=expr; CP; b=bloc; {Iif(e,b)}
  | IF; OP; e=expr; CP; b1=bloc; ELSE; b2=bloc {Iifelse(e,b1,b2)}
- | FOR; OP; e1= option (expr); COMMA; e2=option(expr); COMMA; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
+ | FOR; OP; e1= option (expr); SEMI; e2=option(expr); SEMI; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
  | b=bloc {Iblock(b)} 
 (* | id=IDENT; MUN; SEMI {()}
  | id=IDENT; PUN; SEMI {()}
@@ -111,6 +111,7 @@ instruction:
 	  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}*)
  | RETURN; e= option(expr); SEMI {Ireturn(e)}
  | PRINTLN; OP; e= option(expr); CP;SEMI { Iprint(e)}
+ | e = expr ; SEMI {Iexpr(e)}
 ;
 
 affectation:
@@ -123,7 +124,7 @@ expr:
 ;
 instr_expr:
  (*| ap=appel; {EfunCall(ap)}*)
- | i=incr; ac=acces {Epreincr(i,ac) }
+ | i = incr; ac=acces {Epreincr(i,ac) }
  | ac=acces; i=incr {Epostincr(ac,i)} (********************************)
  | lit=literal { Econst(lit) }
  (*| id=IDENT {id}*)
@@ -136,6 +137,7 @@ instr_expr:
  | ac=acces {Eaccess(ac)}
  (*| OP; e=expr; CP {e}************************************************)
  | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
+ | i = instr_ {Einst(i)}
 ;
 decl:
  | dc=decl_constr {dc}
@@ -229,8 +231,8 @@ literal:
 ;
 
 %inline incr:
-    |PUN {Pun}
-    |MUN {Mun}
+    |PUN {Pun} (* ++ *)
+    |MUN {Mun} (* -- *)
 
 %inline unop:
     |NOT {Not}

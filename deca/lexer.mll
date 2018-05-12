@@ -60,8 +60,12 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { id_or_keyword (lexeme lexbuf) }
   | '"'
       { lire_string (Buffer.create 17) lexbuf }
-  | "System.out.println"
+  | "System.out.print"
       { PRINTLN }
+  | "++"
+      { PUN }
+  | "--"
+      { MUN }
   | "."
       { PT }    
   | "("
@@ -98,10 +102,6 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { EQUAL }
   | "!="
       { NEQ }
-  | "++"
-      { PUN }
-  | "--"
-      { MUN }
   | "<"
       { LT }
   | "<="

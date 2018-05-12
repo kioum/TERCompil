@@ -46,11 +46,17 @@ let rec type_expression env e =
   | Eunop (up, e) -> let te = type_expression env e in
 		     let tr = type_unop te.info up in
 		     {node = Eunop(up, te); info = tr}
+  | Epreincr(incr, a) -> let ta, typ = type_access env a in
+			 if(typ == TypInteger) then 
+			   {node = Epreincr(incr, ta); info = typ}
+			 else failwith "Erreur Type ++pre"
+  | Epostincr(a, incr) -> let ta, typ = type_access env a in
+			  if(typ == TypInteger) then 
+			    {node = Epostincr(ta, incr); info = typ}
+			  else failwith "Erreur Type post++"
   (*| EfunCall  ->
-  | EinstOf   ->
-  | Enew      ->
-  | Epreincr  ->
-    | Epostincr ->*)
+    | EinstOf   ->
+    | Enew      ->*)
   | _         -> failwith "error"
 
 and type_access env a =
@@ -68,7 +74,7 @@ and type_access env a =
   | Afield (e,id) ->
      let te = type_expression env e in
      match te.info with
-     | TypInteger  | TypBoolean | TypVoid | TypNull -> failwith "invalide acces"
+     | TypInteger  | TypBoolean | TypVoid | TypNull -> failwith "invalide access"
      | TypClass cls ->
         begin
           match Type_class.select_field cls id with
