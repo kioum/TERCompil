@@ -13,5 +13,6 @@ make clean; make;./deca test/p1.java; gcc -o test/p1.exe test/p1s ;./test/p1.exe
 -> Incr = Pun et Mun
 -> Instructions = Ireturn, Ifor, IprocCall
 -> Expression = EfunCall, Einstof, Ecast, Enew, Epreincr, Epostincr
+-> Affectation sur les Strings
 -> Gerer les classes
 -> Gerer les fonctions
