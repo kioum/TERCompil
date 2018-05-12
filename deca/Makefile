@@ -4,7 +4,7 @@
 # a.ml, a.ml doit se trouver avant dans la liste.
 #
 
-SOURCES = amd64.ml ast.ml parser.mly lexer.mll type_class.ml typing.ml compile.ml main.ml 
+SOURCES = amd64.ml ast.ml parser.mly lexer.mll type_class.ml typing.ml compile_builtin.ml compile.ml main.ml 
 
 # Nom du binaire
 

@@ -2,10 +2,9 @@
 (* The type of tokens. *)
 
 type token = 
-  | WHILE
   | VOID
-  | VAR
   | THIS
+  | STRING
   | STATIC
   | SET
   | SEMI
@@ -13,7 +12,7 @@ type token =
   | PUN
   | PUBLIC
   | PT
-  | PRINT
+  | PRINTLN
   | PLUS
   | OR
   | OP
@@ -42,12 +41,12 @@ type token =
   | ELSE
   | DIV
   | CP
-  | CONST_INT of (int)
+  | CONST_STRING of (string)
+  | CONST_INT of (int32)
   | CONST_BOOL of (bool)
   | COMMA
   | CLASS
   | CC
-  | CAST
   | CA
   | BOOL
   | AND
@@ -58,4 +57,4 @@ exception Error
 
 (* The monolithic API. *)
 
-val prog: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ( unit )
+val prog: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ( 'info Ast.program )

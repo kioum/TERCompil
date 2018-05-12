@@ -12,7 +12,7 @@
 	"if",       IF;
 	"else",     ELSE;
 	"int",      INT;
-	"string",   STRING;
+	"String",   STRING;
 	"boolean",  BOOL;
 	"class",    CLASS;
 	"extends",  EXTENDS;
@@ -24,8 +24,7 @@
 	"this",     THIS;
 	"void",     VOID;
 	"instanceof", INSTOF;
-	"null",     NULL;
-    "System.out.prinln", PRINTLN
+	"null",     NULL
       ] ;
     fun s ->
       try  Hashtbl.find h s
@@ -54,13 +53,15 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
   | "/*"
       { comment lexbuf; token lexbuf }
   | "//"
-      { comment lexbuf; token lexbuf }     
+      { comment_line lexbuf; token lexbuf }     
   | digit+
       { CONST_INT (Int32.of_string (lexeme lexbuf)) }
   | ident
       { id_or_keyword (lexeme lexbuf) }
   | '"'
       { lire_string (Buffer.create 17) lexbuf }
+  | "System.out.println"
+      { PRINTLN }
   | "."
       { PT }    
   | "("
@@ -79,6 +80,8 @@ let ident = alpha (alpha | '_' | '\'' | digit)*
       { COMMA }
   | ";"
       { SEMI }
+  | "%"
+      { MOD }
   | "="
       { SET }
   | "+"
@@ -150,12 +153,21 @@ and comment = parse
 	{ new_line lexbuf; comment lexbuf }
     | "/*"
 	{ comment lexbuf; comment lexbuf }
-    | "//"
-	{ comment lexbuf; comment lexbuf }
     | "*/"
 	{ () }
     | _
 	{ comment lexbuf }
     | eof
 	{ failwith "Unterminated comment" }
-	
+
+and comment_line = parse
+    | ['\n']
+	{ () }
+    | "/*"
+	{ comment_line lexbuf; comment_line lexbuf }
+    | "*/"
+	{ () }
+    | _
+	{ comment_line lexbuf }
+    | eof
+	{ failwith "Unterminated comment" }

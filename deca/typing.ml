@@ -9,16 +9,25 @@ let type_const c =
   | Cint _ -> TypInteger
   | Cbool _ -> TypBoolean
   | Cstring _ -> TypClass "String"
+  | Cnull -> TypNull
   
 (* A completer binop *)
 let type_binop t1 t2 op =
   match op with
-  | Eq  | Neq                 -> if t1 == t2 then TypBoolean else failwith "Erreur de typage"
-  | Mt  | Me | Lt | Le        -> if t1 == TypInteger && t1 == TypInteger then TypBoolean else failwith "Erreur de typage"
-  | Sub | Mult | Div | Modulo -> (*TypInteger, *) TypInteger
-  | And | Or                  -> (*TypBoolean, *) TypBoolean
+  | Eq  | Neq                 -> if t1 == t2 then TypBoolean else failwith "Erreur de typage binop"
+  | Mt  | Me | Lt | Le        -> if t1 == TypInteger && t2 == TypInteger then TypBoolean else failwith "Erreur de typage binop"
+  | Add                       -> if t1 == TypClass "String" || t2 == TypClass "String" then TypClass "String"
+    else if t1 == TypInteger && t1 == TypInteger then TypInteger
+    else failwith "Erreur de typage binop"
+  | Sub | Mult | Div | Modulo -> if t1 == TypInteger && t2 == TypInteger then TypInteger else failwith "Erreur de typage binop"
+  | And | Or                  -> if t1 == TypBoolean && t2 == TypBoolean then TypBoolean else failwith "Erreur de typage binop"
   | _ -> failwith "unknow binop"
 
+let type_unop t up =
+  match up with
+  |Neg -> if t == TypInteger then TypInteger else failwith "Erreur de typage unop"
+  |Not -> if t == TypBoolean then TypBoolean else failwith "Erreur de typage unop"
+      
 let rec type_expression env e =
   match e.node with 
   | Econst c  -> { node = Econst c; info = type_const c; } 
@@ -34,8 +43,10 @@ let rec type_expression env e =
      let te2 = type_expression env e2 in
      let tr = type_binop te1.info te2.info op in (* Verifier que les types des deux cotés sont bons. *)
      {node = Ebinop(te1, op, te2); info = tr}
- (* | Eunop     ->
-  | EfunCall  ->
+  | Eunop (up, e) -> let te = type_expression env e in
+		     let tr = type_unop te.info up in
+		     {node = Eunop(up, te); info = tr}
+  (*| EfunCall  ->
   | EinstOf   ->
   | Enew      ->
   | Epreincr  ->
@@ -83,17 +94,23 @@ let rec type_instr env i =
      let te = type_expression env e in
      let _, tb = type_block env b in
      env, {node = Iif(te, tb); info = TypVoid; }
-  | Iifelse (e, b1, b2) -> 
+  | Iifelse (e, b1, b2) ->
      let te = type_expression env e in
      let _, tb1 = type_block env b1 in
      let _, tb2 = type_block env b2 in
      env, {node = Iifelse(te, tb1, tb2); info = TypVoid; }
-  (*| Ifor(e1, e2, e3, b) ->
-     let te1 = type_expression env e1 in
-     let te2 = type_expression env e2 in
-     let te3 = type_expression env e3 in
+  | Ifor(oe1, oe2, oe3, b) ->
+     let te1 = (match oe1 with
+       | None -> None
+       | Some e -> Some (type_expression env e)) in
+     let te2 = (match oe2 with
+       | None -> None
+       | Some e -> Some (type_expression env e)) in
+     let te3 = (match oe3 with
+       | None -> None
+       | Some e -> Some (type_expression env e)) in
      let _, tb = type_block env b in
-    env, {node = ifor(te1, te2, te3, tb); info = TypVoid; }*)
+     env, {node = Ifor(te1, te2, te3, tb); info = TypVoid; }
   (*  | IprocCall of 'info call *)
   |Idecl (typ, id, oe) ->
      begin
@@ -102,11 +119,20 @@ let rec type_instr env i =
        |Some e -> let te = type_expression env e in
                   (id, typ) :: env, {node = Idecl (typ, id, Some te);info = typ}
      end
-  | Ireturn (Some e) ->
-     let te = type_expression env e in
-     env, {node = Ireturn (Some (te)); info = te.info;}
-  | Ireturn (None) ->
-     env, {node = Ireturn (None); info = TypVoid;}
+  | Iprint(oe) ->
+     begin
+       match oe with
+       | None -> env, {node = Iprint(None); info = TypVoid;}
+       | Some e -> let te = type_expression env e in
+		   env, {node = Iprint(Some (te)); info = te.info}
+     end
+  | Ireturn (oe) ->
+     begin
+       match oe with
+       |Some e -> let te = type_expression env e in
+		  env, {node = Ireturn (Some (te)); info = te.info;}
+       | None -> env, {node = Ireturn (None); info = TypVoid;}
+  end
            
 and type_block env b =
   let _, trb =

@@ -25,11 +25,9 @@
 
 %token SET
 
-%token VAR
 %token INT BOOL STRING VOID
 %token NULL
 
-%token PRINT
 %token PRINTLN
 %token NEW
 
@@ -51,15 +49,13 @@
 
 (* Déclaration des priorités*)
 
-
-%right SET
 %left OR
 %left AND
 %left EQUAL NEQ
 %left LT LE MT ME INSTOF
 %left PLUS MINUS
 %left MULT DIV MOD
-%right NOT PUN MUN NEG
+%right NOT
 %left PT
 
 
@@ -81,15 +77,15 @@ prog:
   
 main_class_def:
  | PUBLIC; CLASS; id=IDENT; OA;
-PUBLIC; STATIC; VOID; main=IDENT; OP; str=IDENT; arg=IDENT; OC; CC; CP;
+PUBLIC; STATIC; VOID; main=IDENT; OP; STRING; arg=IDENT; OC; CC; CP;
 b=bloc;CA {{name = id; params = arg ; instructions = b} }
 ;
 class_defs:
  | cds=list(class_def) {cds}
 ;
 class_def:
- | CLASS; id=IDENT; OA; dl=list(decl); CA; {{name=id; extends="";decls=dl;}}
- | CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; dl=list(decl); CA; {{name = id; extends= id2; decls = dl}}
+ | CLASS; id=IDENT; OA; dl=list(decl); CA; {{name_def=id; extends="";decls=dl;}}
+ | CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; dl=list(decl); CA; {{name_def = id; extends= id2; decls = dl}}
 ;
 bloc:
  | OA; is=list(instr_) CA {is}
@@ -102,7 +98,7 @@ instruction:
  (* | ie=instr_expr; SEMI {ie}	 *)  
  | ac=acces; SET; e=expr; SEMI {Iset(ac,e)}
  (* | id=IDENT; SEMI {id}*)
- | t=typ; id=IDENT; SET; e=option(expr); SEMI {Idecl(t,id, e)}
+ | t=typ; id=IDENT; e=affectation {Idecl(t,id, e)}
  | IF; OP; e=expr; CP; b=bloc; {Iif(e,b)}
  | IF; OP; e=expr; CP; b1=bloc; ELSE; b2=bloc {Iifelse(e,b1,b2)}
  | FOR; OP; e1= option (expr); COMMA; e2=option(expr); COMMA; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
@@ -114,13 +110,18 @@ instruction:
  | dconst=decl_constr; SEMI {()}
 	  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}*)
  | RETURN; e= option(expr); SEMI {Ireturn(e)}
+ | PRINTLN; OP; e= option(expr); CP;SEMI { Iprint(e)}
+;
+
+affectation:
+ | SET; e=expr; SEMI { Some e }
+ | SEMI { None }
 ;
 
 expr:
  |e = instr_expr {mk_loc ($startpos, $endpos) e}
 ;
 instr_expr:
- (*| ac=acces; SET; e=expression{Eaccess(ac,e)}*)
  (*| ap=appel; {EfunCall(ap)}*)
  | i=incr; ac=acces {Epreincr(i,ac) }
  | ac=acces; i=incr {Epostincr(ac,i)} (********************************)
@@ -128,13 +129,12 @@ instr_expr:
  (*| id=IDENT {id}*)
  (*| MINUS; lit=literal {Eunop(MINUS,lit)}*)
  | e1=expr; bop=binop; e2=expr { Ebinop(e1,bop, e2) }
+ | up=unop; e=expr { Eunop(up, e) }
  | e=expr; INSTOF; id=IDENT {EinstOf(e, id)}
  | OP; t=typ; CP;e= expr {Ecast(t,e)}
  (*| ie=expr {ie}*)
  | ac=acces {Eaccess(ac)}
  (*| OP; e=expr; CP {e}************************************************)
- (*| ac=acces; i=incr {Epostincr(i,id)}
-   | i=incr; ac=aces {Epreincr(i,id) }*)
  | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
 ;
 decl:
@@ -217,6 +217,7 @@ literal:
     | MINUS  { Sub }
     | MULT   { Mult }
     | DIV    { Div }
+    | MOD    { Modulo }
     | EQUAL  { Eq }
     | NEQ    { Neq }
     | LT     { Lt }
@@ -231,3 +232,6 @@ literal:
     |PUN {Pun}
     |MUN {Mun}
 
+%inline unop:
+    |NOT {Not}
+    |MINUS {Neg}

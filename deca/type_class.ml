@@ -51,7 +51,7 @@ let init_class_env (classes : position class_def list) =
                                      class_fields = []; class_methods = [] } in
   let sorted_classes = topological_sort classes in
   List.iter (fun info ->
-    let cls = info.name in
+    let cls = info.name_def in
     let par = info.extends in
     let decls = info.decls in
 

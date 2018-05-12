@@ -1,5 +1,7 @@
 open Amd64
 open Ast
+open Compile_builtin
+open Printf
 
 let gen_label =
   let count = ref 0 in
@@ -7,7 +9,7 @@ let gen_label =
     Printf.sprintf "__label__%05d" ! count
 
 let str_table = Hashtbl.create 17
-  
+	   
 (* Le résultat de l'expression est stocké dans ras/eax *)
 let rec compile_expr env e =
   match e.node with
@@ -26,25 +28,49 @@ movq ~$24 ~%rdi ++
   movq ~$1234 (addr ~%rax) ++
   movq ~:label (addr ~ofs:8 ~%rax)++
   movq ~$(String.length str) (addr ~ofs:16 ~%rax)
+
   | Econst Cbool true -> movl ~$1 ~%eax
   | Econst Cbool false -> xorl ~%eax ~%eax
   | Econst Cnull -> xorq ~%rax ~%rax
-  | Eaccess a ->  let ilc = compile_access env a in
-                  ilc ++ movq (addr ~%rax) ~%rax
+  | Eaccess a -> let pos_rbp = compile_access env a in
+		 movq (addr ~ofs:pos_rbp ~%rbp) ~%rax
+  | Eunop(up, e) ->
+     begin
+       let ecode = compile_expr env e in
+       let lbl_false = gen_label () in
+       let lbl_true = gen_label () in
+       match up with
+       | Neg -> ecode ++
+          negl ~%eax
+	  
+       | Not ->  ecode ++
+	  cmpl ~$0 ~%eax ++
+	  jne lbl_false ++
+	  movl ~$1 ~%eax ++
+	  jmp lbl_true ++
+	  label lbl_false ++
+	  xorl ~%eax ~%eax ++
+	  label lbl_true
+     end
   | Ebinop(e1, op, e2) ->
      let code1 = compile_expr env e1 in
      let code2 = compile_expr env e2 in
      let lbl_next = gen_label () in
      match op with
      | Eq -> expr_calcul code1 code2 ++
-        cmpl ~%r9d ~%eax
+        cmpl ~%eax ~%r9d ++
+	je lbl_next ++
+	movl ~$0 ~%eax ++
+	label lbl_next 
+	       
+	
      (* sete %al ++ movzbl %al %eax *)
      (* movzbq %al %eax *)
      (*| Div ->   si b!= 0 :
        idiv %r10d  (*q->eax r -> edx *) cltd*)
      | And ->
         code1 ++
-          cmpl  ~%eax ~$0 ++
+          cmpl ~$0 ~%eax ++
           je lbl_next ++
           code2 ++
           label lbl_next
@@ -53,11 +79,19 @@ movq ~$24 ~%rdi ++
         jne lbl_next ++
         code2 ++
         label lbl_next
+     | Add ->
+	begin
+	  if(e1.info == TypClass "String" || e2.info == TypClass "String") then
+	    failwith "todo toString"
+	  else
+	    expr_calcul code1 code2 ++
+	      addl ~%r9d ~%eax
+	end
      | Sub -> expr_calcul code1 code2 ++
-        subl ~%r9d ~%eax
+        subl ~%eax ~%r9d
      | Mult -> expr_calcul code1 code2 ++
         imull ~%r9d ~%eax
-(* Ecall system.out.println token dans lexer.mll, chnager typeur, faire Ecall ... *)
+	
 and expr_calcul code1 code2 =
   code1 ++
     pushq ~%rax ++
@@ -66,18 +100,21 @@ and expr_calcul code1 code2 =
           
 and compile_access env a =
   match a with
-  |Aident id -> failwith "todo ident"
-  |Afield (e, id) -> failwith "todo field"
-  | _ -> failwith "t naze"
-          
+  | Aident id -> List.assoc id env
+  | Afield (e, id) -> failwith "todo field"
+  | _ -> failwith "Error access compile"
+     
           
 let rec compile_block exit_lbl min_rbp cur_rbp env tbody =
   let amin_rbp, _, _, code =
     List.fold_left (fun (amin_rbp, acur_rbp, aenv, acode) i ->
-      let nmin_rbp, ncur_rbp, nenv, icode = compile_instr exit_lbl amin_rbp acur_rbp aenv i
-      in min amin_rbp nmin_rbp,
-      ncur_rbp, nenv, acode ++ icode)
-      (min_rbp, cur_rbp, env, nop) tbody
+      let nmin_rbp, ncur_rbp, nenv, icode =
+	compile_instr exit_lbl amin_rbp acur_rbp aenv i
+      in
+      min amin_rbp nmin_rbp,
+      ncur_rbp,
+      nenv,
+      acode ++ icode) (min_rbp, cur_rbp, env, nop) tbody
   in
   amin_rbp, cur_rbp, env, code
     
@@ -86,13 +123,25 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
     Iskip ->
       min_rbp, cur_rbp, env, nop
   | Iblock bl -> compile_block exit_lbl min_rbp cur_rbp env bl
-  | Idecl(_, id , oe) ->
+  | Idecl(_, id, oe) ->
      begin
        match oe with
-       |None -> failwith "ici"(* init default *)
-       |Some e -> let ecode = compile_expr env e in
-                  min_rbp, cur_rbp, env, ecode
+       (*init default*)
+       |None -> min_rbp, cur_rbp-8, (id, cur_rbp-8)::env, nop
+       |Some e ->
+	  let ecode = compile_expr env e in
+	  let declcode =
+	    ecode ++
+	      movq ~%rax (addr ~ofs:(cur_rbp-8) ~%rbp)
+	  in
+	  min_rbp, cur_rbp-8, (id, cur_rbp-8)::env, declcode
      end
+  |Iset(a, e) -> let ecode = compile_expr env e in
+		 let pos_rbp = compile_access env a in
+		 let setcode = ecode ++
+		   movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp)
+		 in
+		 min min_rbp pos_rbp, cur_rbp, env, setcode 
   (*| Ireturn e ->
        match e with 
     |None -> min_rbp cur_rbp env nop++ jmp lbl_exit
@@ -129,7 +178,25 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
          label lbl_next
      in
      min min_rbp1 min_rbp, cur_rbp, env, ifcode
-       
+   | Iprint (oe) ->
+      begin
+	match oe with
+	| None -> let printcode = ret
+		  in
+		  min_rbp, cur_rbp, env, printcode
+	| Some e -> let ecode = compile_expr env e in
+		    let printcode =
+		      ecode ++
+			begin 
+			  match e.info with
+			  |TypInteger -> call "__builtin_print_int"
+			  |TypBoolean -> call "__builtin_print_boolean"
+			  |TypClass "String" -> call "__builtin_print_String"
+			  |_ -> nop
+			end
+		    in min_rbp, cur_rbp, env, printcode 
+      end
+      
 
 let compile_prog (classes, { instructions = tbody }) =
   let min_rbp,_,_,code_main_body = (compile_block "" 0 0 [] tbody) in
@@ -149,9 +216,12 @@ let compile_prog (classes, { instructions = tbody }) =
   in
 
 
-  let code = code_main in
+  let code = code_main ++ 
+    builtins
+  in
   let data = nop ++
-    (Hashtbl.fold (fun str lbl a_code -> a_code ++ label lbl ++ string str) str_table nop)
+    (Hashtbl.fold (fun str lbl a_code -> a_code ++ label lbl ++ string str) str_table nop) ++
+    builtins_data
     
   in
   {

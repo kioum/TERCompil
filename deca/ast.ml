@@ -13,7 +13,7 @@ and ident = string
   
 (*info de chaque classe*)
 and 'info class_def = {
-  name: ident;
+  name_def: ident;
   extends: ident;
   decls: 'info decl list;
 }
@@ -42,13 +42,14 @@ and 'info instr =
   | Iifelse    of 'info expression * 'info block * 'info block                           (* Branchement       *)
   | Iif    of 'info expression * 'info block
   | IprocCall of 'info call                                              (* Appel de fonction *)
+  | Iprint of 'info expression option
   | Ireturn of 'info expression option
 
 and 'info expr_ =
   | Econst    of const                         (* Valeur immédiate    *)
   | Eaccess   of 'info access                        (* Valeur en mémoire   *)
   | Ebinop     of 'info expression * binop * 'info expression (* Opération binaire   *)
-  | Eunop      of binop * 'info expression              (* Opération unaire    *)   
+  | Eunop      of unop * 'info expression              (* Opération unaire    *)   
   | EfunCall   of 'info call                            (* Appel de fonction   *)
   | EinstOf of 'info expression * ident
   | Ecast of typ * 'info expression
