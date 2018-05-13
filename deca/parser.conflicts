@@ -1,10 +1,10 @@
 
-** Conflict (reduce/reduce) in state 61.
-** Tokens involved: PT PLUS OR NEQ MULT MT MINUS ME LT LE INSTOF EQUAL DIV AND
+** Conflict (reduce/reduce) in state 93.
+** Tokens involved: PT PLUS OR NEQ MULT MT MOD MINUS ME LT LE INSTOF EQUAL DIV AND
 ** The following explanations concentrate on token PT.
 ** This state is reached from prog after reading:
 
-CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA PUN acces 
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA THIS PT acces 
 
 ** The derivations that appear below have the following common factor:
 ** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
@@ -20,30 +20,30 @@ CLASS IDENT OA list(decl) CA
                                                                          OA list(instr_) CA 
                                                                             instr_ list(instr_) 
                                                                             instruction 
-                                                                            acces SET expr SEMI 
+                                                                            expr SEMI 
+                                                                            instr_expr 
                                                                             (?)
 
-** In state 61, looking ahead at PT, reducing production
-** instr_expr -> PUN acces 
-** is permitted because of the following sub-derivation:
-
-expr PT IDENT // lookahead token appears
-instr_expr // lookahead token is inherited
-PUN acces . 
-
-** In state 61, looking ahead at PT, reducing production
+** In state 93, looking ahead at PT, reducing production
 ** instr_expr -> acces 
 ** is permitted because of the following sub-derivation:
 
-expr PT IDENT 
-instr_expr 
-PUN acces 
-    expr PT IDENT // lookahead token appears
-    instr_expr // lookahead token is inherited
-    acces . 
+THIS PT acces 
+        expr PT IDENT // lookahead token appears
+        instr_expr // lookahead token is inherited
+        acces . 
 
-** Conflict (shift/reduce) in state 60.
-** Tokens involved: PT PLUS OR NEQ MULT MT MINUS ME LT LE INSTOF EQUAL DIV AND
+** In state 93, looking ahead at PT, reducing production
+** instr_expr -> THIS PT acces 
+** is permitted because of the following sub-derivation:
+
+acces SET expr 
+expr PT IDENT // lookahead token appears
+instr_expr // lookahead token is inherited
+THIS PT acces . 
+
+** Conflict (shift/reduce) in state 90.
+** Tokens involved: PT PLUS OR NEQ MULT MT MOD MINUS ME LT LE INSTOF EQUAL DIV AND
 ** The following explanations concentrate on token PT.
 ** This state is reached from prog after reading:
 
@@ -63,33 +63,32 @@ CLASS IDENT OA list(decl) CA
                                                                          OA list(instr_) CA 
                                                                             instr_ list(instr_) 
                                                                             instruction 
-                                                                            acces SET expr SEMI 
+                                                                            expr SEMI 
+                                                                            instr_expr 
                                                                             (?)
 
-** In state 60, looking ahead at PT, shifting is permitted
+** In state 90, looking ahead at PT, shifting is permitted
 ** because of the following sub-derivation:
 
-expr PT IDENT 
-instr_expr 
 OP typ CP expr 
           instr_expr 
-          acces PUN 
+          acces SET expr 
           expr . PT IDENT 
 
-** In state 60, looking ahead at PT, reducing production
+** In state 90, looking ahead at PT, reducing production
 ** instr_expr -> OP typ CP expr 
 ** is permitted because of the following sub-derivation:
 
+acces SET expr 
 expr PT IDENT // lookahead token appears
 instr_expr // lookahead token is inherited
 OP typ CP expr . 
 
-** Conflict (reduce/reduce) in state 59.
-** Tokens involved: PT PLUS OR NEQ MULT MT MINUS ME LT LE INSTOF EQUAL DIV AND
-** The following explanations concentrate on token PT.
+** Conflict (reduce/reduce) in state 87.
+** Token involved: CP
 ** This state is reached from prog after reading:
 
-CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA MUN acces 
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA OP IDENT 
 
 ** The derivations that appear below have the following common factor:
 ** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
@@ -105,24 +104,184 @@ CLASS IDENT OA list(decl) CA
                                                                          OA list(instr_) CA 
                                                                             instr_ list(instr_) 
                                                                             instruction 
-                                                                            acces SET expr SEMI 
+                                                                            expr SEMI 
+                                                                            instr_expr 
                                                                             (?)
 
-** In state 59, looking ahead at PT, reducing production
-** instr_expr -> MUN acces 
+** In state 87, looking ahead at CP, reducing production
+** acces -> IDENT 
 ** is permitted because of the following sub-derivation:
 
+OP expr CP // lookahead token appears
+   instr_expr // lookahead token is inherited
+   acces // lookahead token is inherited
+   IDENT . 
+
+** In state 87, looking ahead at CP, reducing production
+** typ -> IDENT 
+** is permitted because of the following sub-derivation:
+
+OP typ CP expr // lookahead token appears
+   IDENT . 
+
+** Conflict (reduce/reduce) in state 82.
+** Tokens involved: PT PLUS OR NEQ MULT MT MOD MINUS ME LT LE INSTOF EQUAL DIV AND
+** The following explanations concentrate on token PT.
+** This state is reached from prog after reading:
+
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA incr acces 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+class_defs main_class_def EOF 
+list(class_def) 
+class_def list(class_def) 
+CLASS IDENT OA list(decl) CA 
+               decl list(decl) 
+               decl_constr 
+               IDENT OP loption(separated_nonempty_list(COMMA,param)) CP bloc 
+                                                                         OA list(instr_) CA 
+                                                                            instr_ list(instr_) 
+                                                                            instruction 
+                                                                            expr SEMI 
+                                                                            instr_expr 
+                                                                            (?)
+
+** In state 82, looking ahead at PT, reducing production
+** instr_expr -> incr acces 
+** is permitted because of the following sub-derivation:
+
+acces SET expr 
 expr PT IDENT // lookahead token appears
 instr_expr // lookahead token is inherited
-MUN acces . 
+incr acces . 
 
-** In state 59, looking ahead at PT, reducing production
+** In state 82, looking ahead at PT, reducing production
 ** instr_expr -> acces 
 ** is permitted because of the following sub-derivation:
 
-expr PT IDENT 
-instr_expr 
-MUN acces 
-    expr PT IDENT // lookahead token appears
-    instr_expr // lookahead token is inherited
-    acces . 
+incr acces 
+     expr PT IDENT // lookahead token appears
+     instr_expr // lookahead token is inherited
+     acces . 
+
+** Conflict (reduce/reduce) in state 73.
+** Token involved: CP
+** This state is reached from prog after reading:
+
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA acces OP 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+class_defs main_class_def EOF 
+list(class_def) 
+class_def list(class_def) 
+CLASS IDENT OA list(decl) CA 
+               decl list(decl) 
+               decl_constr 
+               IDENT OP loption(separated_nonempty_list(COMMA,param)) CP bloc 
+                                                                         OA list(instr_) CA 
+                                                                            instr_ list(instr_) 
+                                                                            instruction 
+                                                                            expr SEMI 
+                                                                            instr_expr 
+                                                                            appel 
+                                                                            acces OP option(separated_list(COMMA,expr)) CP // lookahead token appears
+                                                                                     (?)
+
+** In state 73, looking ahead at CP, reducing production
+** loption(separated_nonempty_list(COMMA,expr)) -> 
+** is permitted because of the following sub-derivation:
+
+loption(separated_nonempty_list(COMMA,expr)) // lookahead token is inherited
+. 
+
+** In state 73, looking ahead at CP, reducing production
+** option(separated_list(COMMA,expr)) -> 
+** is permitted because of the following sub-derivation:
+
+. 
+
+** Conflict (shift/reduce) in state 48.
+** Tokens involved: PT PLUS OR NEQ MULT MT MOD MINUS ME LT LE INSTOF EQUAL DIV AND
+** The following explanations concentrate on token PT.
+** This state is reached from prog after reading:
+
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA acces SET expr 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+class_defs main_class_def EOF 
+list(class_def) 
+class_def list(class_def) 
+CLASS IDENT OA list(decl) CA 
+               decl list(decl) 
+               decl_constr 
+               IDENT OP loption(separated_nonempty_list(COMMA,param)) CP bloc 
+                                                                         OA list(instr_) CA 
+                                                                            instr_ list(instr_) 
+                                                                            instruction 
+                                                                            expr SEMI 
+                                                                            instr_expr 
+                                                                            (?)
+
+** In state 48, looking ahead at PT, shifting is permitted
+** because of the following sub-derivation:
+
+acces SET expr 
+          instr_expr 
+          acces SET expr 
+          expr . PT IDENT 
+
+** In state 48, looking ahead at PT, reducing production
+** instr_expr -> acces SET expr 
+** is permitted because of the following sub-derivation:
+
+acces SET expr 
+expr PT IDENT // lookahead token appears
+instr_expr // lookahead token is inherited
+acces SET expr . 
+
+** Conflict (reduce/reduce) in state 28.
+** Token involved: CP
+** This state is reached from prog after reading:
+
+CLASS IDENT OA IDENT OP loption(separated_nonempty_list(COMMA,param)) CP OA NEW IDENT OP 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+prog 
+class_defs main_class_def EOF 
+list(class_def) 
+class_def list(class_def) 
+CLASS IDENT OA list(decl) CA 
+               decl list(decl) 
+               decl_constr 
+               IDENT OP loption(separated_nonempty_list(COMMA,param)) CP bloc 
+                                                                         OA list(instr_) CA 
+                                                                            instr_ list(instr_) 
+                                                                            instruction 
+                                                                            expr SEMI 
+                                                                            instr_expr 
+                                                                            NEW IDENT OP option(separated_list(COMMA,expr)) CP // lookahead token appears
+                                                                                         (?)
+
+** In state 28, looking ahead at CP, reducing production
+** loption(separated_nonempty_list(COMMA,expr)) -> 
+** is permitted because of the following sub-derivation:
+
+loption(separated_nonempty_list(COMMA,expr)) // lookahead token is inherited
+. 
+
+** In state 28, looking ahead at CP, reducing production
+** option(separated_list(COMMA,expr)) -> 
+** is permitted because of the following sub-derivation:
+
+. 

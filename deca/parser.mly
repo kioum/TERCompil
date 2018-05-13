@@ -54,7 +54,7 @@
 %left LT LE MT ME INSTOF
 %left PLUS MINUS
 %left MULT DIV MOD
-%right NOT
+%right NOT 
 %left PT
 
 
@@ -67,25 +67,22 @@
 %type < 'info Ast.program > prog (* ? *)
     
 %%
-
-      (* RÈGLES DE GRAMMAIRE *)
+(* RÈGLES DE GRAMMAIRE *)
 
 prog:
    |cds=class_defs; mcd=main_class_def; EOF { (cds,mcd) }
 ;
   
 main_class_def:
- | PUBLIC; CLASS; id=IDENT; OA;
-PUBLIC; STATIC; VOID; main=IDENT; OP; STRING; arg=IDENT; OC; CC; CP;
+ | PUBLIC; CLASS; id=IDENT; OA; PUBLIC; STATIC; VOID; main=IDENT; OP; STRING; arg=IDENT; OC; CC; CP;
 b=bloc;CA {{name = id; params = arg ; instructions = b} }
- |
 ;
 class_defs:
  | cds=list(class_def) {cds}
 ;
 class_def:
- | CLASS; id=IDENT; OA; dl=list(decl); CA; {{name_def=id; extends="";decls=dl;}}
- | CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; dl=list(decl); CA; {{name_def = id; extends= id2; decls = dl}}
+ | CLASS; id=IDENT; OA; dl=list(decl); CA; {{name_def=id; extends=None;decls=dl;}}
+ | CLASS; id=IDENT; EXTENDS; id2=IDENT; OA; dl=list(decl); CA; {{name_def = id; extends= Some id2; decls = dl}}
 ;
 bloc:
  | OA; is=list(instr_) CA {is}
@@ -96,19 +93,19 @@ instr_:
 ;
 instruction:
  | SEMI; {Iskip}
- | t=typ; id=IDENT; e=affectation {Idecl(t,id, e)}
+ | t=typ; id=IDENT; e=affectation; SEMI {Idecl(t,id, e)}
  | IF; OP; e=expr; CP; b=bloc; {Iif(e,b)}
  | IF; OP; e=expr; CP; b1=bloc; ELSE; b2=bloc {Iifelse(e,b1,b2)}
  | FOR; OP; e1= option (expr); SEMI; e2=option(expr); SEMI; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
  | b=bloc {Iblock(b)} 
  | RETURN; e= option(expr); SEMI {Ireturn(e)}
  | PRINTLN; OP; e= option(expr); CP;SEMI { Iprint(e)}
- | e = expr; SEMI {Iexpr(e)}
+| e = expr; SEMI {Iexpr(e)}
 ;
 
 affectation:
- | SET; e=expr; SEMI { Some e }
- | SEMI { None }
+ | SET; e=expr { Some e }
+ | (**) { None }
 ;
 
 expr:
@@ -117,22 +114,23 @@ expr:
 instr_expr:
  (* instr_expr *)
  | ac=acces; SET; e=expr; {Eset(ac,e)}
- | i = incr; ac=acces {Epreincr(i,ac) }
+ | i = incr; ac=acces { Epreincr(i, ac) }
  | ac=acces; i=incr {Epostincr(ac,i)}
+ | THIS; PT; ac=acces {Eaccess(ac)}
  | ac=acces {Eaccess(ac)}
- | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
- | ap = appel; {EfunCall(ap)}
+ | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id, l)}
+ | ap = appel { EfunCall(ap)}
  (*Expr *)
  | lit=literal { Econst(lit) }
  | e1=expr; bop=binop; e2=expr { Ebinop(e1,bop, e2) }
  | up=unop; e=expr { Eunop(up, e) }
  | e=expr; INSTOF; id=IDENT {EinstOf(e, id)}
  | OP; t=typ; CP;e=expr {Ecast(t,e)}
- | OP; e=expr; CP {e.node}
 ;
 appel:
-| ac = acces; OP; l=option(separated_list(COMMA, expr)); CP { (ac, l) }
+| ac = acces; OP; l=separated_list(COMMA, expr); CP { (ac, l) }
 ;
+
 decl:
  | dc=decl_constr {dc}
  | dm=decl_meth {dm}
@@ -160,6 +158,7 @@ typ:
  | VOID {TypVoid } 
  | BOOL {TypBoolean}
  | STRING {TypClass "String"}
+ | id=IDENT {TypClass id}
 ;
 
 literal:
@@ -185,7 +184,7 @@ literal:
     | OR     { Or }
 ;
 
-%inline incr:
+incr:
     |PUN {Pun} (* ++ *)
     |MUN {Mun} (* -- *)
 

@@ -14,7 +14,7 @@ and ident = string
 (*info de chaque classe*)
 and 'info class_def = {
   name_def: ident;
-  extends: ident;
+  extends: ident option;
   decls: 'info decl list;
 }
 
@@ -57,7 +57,7 @@ and 'info expr_ =
   | Epreincr of incr * 'info access
   | Epostincr of 'info access * incr
       
-and 'info call = 'info access * 'info expression list option (* Appel de fonction *)
+and 'info call = 'info access * 'info expression list (* Appel de fonction *)
   
 and const =
   | Cint  of int32    (* Constante entière   *)
@@ -67,10 +67,6 @@ and const =
 
 and 'info access =
   | Aident of ident
-  (*| Athis of ident
-  | Acall of 'info call * ident
-  | Aaccess of 'info access * ident
-    | Aexpr of 'info expression * ident*)
   | Afield of 'info expression * ident
       
 and binop =

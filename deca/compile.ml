@@ -1,7 +1,6 @@
 open Amd64
 open Ast
 open Compile_builtin
-open Printf
 
 let gen_label =
   let count = ref 0 in
@@ -71,11 +70,14 @@ movq ~$24 ~%rdi ++
 		 let pos_rbp = compile_access env a in
 		 ecode ++
 		   movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp)
+  |EfunCall(c) -> nop (* a faire *)
+  |Ecast(_,a) -> nop (* a faire *)
+  |EinstOf(e, id) -> nop(* a faire *)
+  |Enew(id, ole) -> nop (* a faire *)   
   | Ebinop(e1, op, e2) ->
      let code1 = compile_expr env e1 in
      let code2 = compile_expr env e2 in
      let lbl_next = gen_label () in
-     let lbl_next2 = gen_label () in
      match op with
      | Eq -> expr_calcul code1 code2 ++
         cmpl ~%eax ~%r9d ++
@@ -107,8 +109,6 @@ movq ~$24 ~%rdi ++
 	jge lbl_next++
         xorl ~%eax ~%eax ++
 	label lbl_next
-     (* sete %al ++ movzbl %al %eax *)
-     (* movzbq %al %eax *)
      | Div -> code2++
 	cmpl ~$0 ~%eax++
 	jne lbl_next ++
@@ -118,12 +118,15 @@ movq ~$24 ~%rdi ++
 	movl ~$0 ~%edx ++
 	movl ~%r9d ~%ebx ++
 	idivl ~%ebx
-     | Modulo -> expr_calcul code2 code1 ++
+     | Modulo ->code2++
+	cmpl ~$0 ~%eax++
+	jne lbl_next ++
+	call "__builtin_div0_error"++
+	label lbl_next ++ expr_calcul code2 code1 ++
 	movl ~$0 ~%edx ++
 	movl ~%r9d ~%ebx ++
 	idivl ~%ebx ++
 	movl ~%edx ~%eax
-     (* idiv ~%r10d  (*q->eax r -> edx *) cltd*)
      | And ->
         code1 ++
           cmpl ~$0 ~%eax ++
@@ -158,7 +161,7 @@ and expr_calcul code1 code2 =
 and compile_access env a =
   match a with
   | Aident id -> List.assoc id env
-  | Afield (e, id) -> failwith "todo field"
+  | Afield (e, id) -> failwith "ici field"
      
           
 let rec compile_block exit_lbl min_rbp cur_rbp env tbody =
@@ -182,9 +185,8 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
   | Idecl(typ, id, oe) ->
      begin
        let decalage = (match typ with
-	 |TypInteger -> 8
-	 |TypBoolean -> 8
-	 |TypClass "String" -> 16) in
+	 |TypClass "String" -> 16
+	 |_ -> 8) in
        match oe with
        (*init default*)
        |None -> min_rbp, cur_rbp-decalage, (id, cur_rbp-decalage)::env, nop
@@ -196,10 +198,13 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
 	  in
 	  min_rbp, cur_rbp-decalage, (id, cur_rbp-decalage)::env, declcode
      end
-  (*| Ireturn e ->
-       match e with 
-    |None -> min_rbp cur_rbp env nop++ jmp lbl_exit
-    |Some e -> min_rbp cur_rbp env e_code++ jmp lbl_exit*)
+  | Ireturn e ->
+     begin
+     match e with 
+     |None -> min_rbp, cur_rbp, env, nop++ jmp exit_lbl
+     |Some e -> let ecode = compile_expr env e in
+		min_rbp, cur_rbp, env, ecode ++ jmp exit_lbl
+     end
   | Iifelse (e, i1, i2) ->
      let ecode = compile_expr env e in
      let min_rbp1, _, _, icode1 =
@@ -266,14 +271,15 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
 			  |TypInteger -> call "__builtin_print_int"
 			  |TypBoolean -> call "__builtin_print_boolean"
 			  |TypClass "String" -> call "__builtin_print_String"
-			  |_ -> nop
+			  |_ -> failwith "Error print"
 			end
 		    in min_rbp, cur_rbp, env, printcode 
       end
 	
 	
 let compile_prog (classes, { instructions = tbody }) =
-  let min_rbp,_,_,code_main_body = (compile_block "" 0 0 [] tbody) in
+  let min_rbp,_,_,code_main_body = (compile_block "__exit_main" 0 0 [] tbody) in
+  let (code_classes, data_classes) = (nop, nop) in 
   let code_main =
     glabel "main" ++
       pushq ~%rbp ++
@@ -289,11 +295,13 @@ let compile_prog (classes, { instructions = tbody }) =
       ret 
   in
   
-  let code = code_main ++ 
-    builtins
+  let code = code_main ++
+    code_classes ++
+    builtins 
   in
   let data = nop ++
     (Hashtbl.fold (fun str lbl a_code -> a_code ++ label lbl ++ string str) str_table nop) ++
+    data_classes ++
     builtins_data
   
   in

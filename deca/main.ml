@@ -5,6 +5,7 @@ let ext = ".java"
 let usage = Format.sprintf "usage: %s [options] file%s" Sys.argv.(0) ext
 
 let parse_only = ref false
+let typing_only = ref false (*permet d'arreter le programme au typing (debug) *)
 
 let print_pos lb=
   let open Lexing in
@@ -14,6 +15,7 @@ let print_pos lb=
 
 let spec =
   ["--parse-only", Arg.Set parse_only, "  stops after parsing";
+  "--typing-only", Arg.Set typing_only, "  stops after parsing";
 ]
 
 let file =
@@ -33,6 +35,7 @@ let () =
     let p = Parser.prog Lexer.token lb in
     if !parse_only then exit 0;
     let t = Typing.type_prog p in
+    if !typing_only then exit 0; (* stop after typing *)
     let code = Compile.compile_prog t in
     close_in c;
     let ofile = (Filename.chop_suffix file ext) ^ ".s" in

@@ -1,5 +1,4 @@
 open Ast
-
 (*type method_desc
   
   def ident
@@ -18,11 +17,10 @@ let class_env : (ident, class_info) Hashtbl.t =
     Hashtbl.create 17
 
 let rec extends c1 c2 =
-  if c1 == "" then false
-  else  if c1 == c2 then true
+  if (compare c1 "") == 0 then false
+  else if  (compare c1 c2) == 0 then true
   else let par_c1 = (Hashtbl.find class_env c1).class_parent
-       in extends par_c1 c2
-       
+      in extends par_c1 c2
 let subType t1 t2 = 
   match t1, t2 with 
     TypBoolean, TypBoolean
@@ -40,8 +38,7 @@ let wf t = match t with
   | TypClass "String" -> true
   | TypClass a -> Hashtbl.mem class_env a
   | TypNull -> false
-     
-     
+   
 let topological_sort classes = classes (* à faire! *)
   
 let init_class_env (classes : position class_def list) =
@@ -52,9 +49,11 @@ let init_class_env (classes : position class_def list) =
   let sorted_classes = topological_sort classes in
   List.iter (fun info ->
     let cls = info.name_def in
-    let par = info.extends in
+    let par = (match info.extends with
+	Some p -> p
+      | None -> "Object") in
     let decls = info.decls in
-
+    
     let par_fields = (Hashtbl.find class_env par).class_fields in
     let par_meth = (Hashtbl.find class_env par).class_methods in
     let my_fields, my_methods =
