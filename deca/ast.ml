@@ -37,17 +37,16 @@ and 'info instr =
     Iskip
   | Idecl of typ * ident * 'info expression option
   | Iblock of 'info block
-  | Iset   of 'info access * 'info expression                              (* Affectation       *)
   | Ifor   of 'info expression option * 'info expression option * 'info expression option * 'info block        (* Boucle For        *)
   | Iifelse    of 'info expression * 'info block * 'info block                           (* Branchement       *)
   | Iif    of 'info expression * 'info block
-  | IprocCall of 'info call                                              (* Appel de fonction *)
   | Iprint of 'info expression option
   | Ireturn of 'info expression option
   | Iexpr of 'info expression
 
 and 'info expr_ =
   | Econst    of const                         (* Valeur immédiate    *)
+  | Eset   of 'info access * 'info expression                              (* Affectation       *)
   | Eaccess   of 'info access                        (* Valeur en mémoire   *)
   | Ebinop     of 'info expression * binop * 'info expression (* Opération binaire   *)
   | Eunop      of unop * 'info expression              (* Opération unaire    *)   
@@ -57,9 +56,8 @@ and 'info expr_ =
   | Enew of ident * 'info expression list
   | Epreincr of incr * 'info access
   | Epostincr of 'info access * incr
-  | Einst of 'info instruction
       
-and 'info call = string * 'info expression option list (* Appel de fonction *)
+and 'info call = 'info access * 'info expression list option (* Appel de fonction *)
   
 and const =
   | Cint  of int32    (* Constante entière   *)

@@ -21,7 +21,6 @@ let type_binop t1 t2 op =
     else failwith "Erreur de typage binop"
   | Sub | Mult | Div | Modulo -> if t1 == TypInteger && t2 == TypInteger then TypInteger else failwith "Erreur de typage binop"
   | And | Or                  -> if t1 == TypBoolean && t2 == TypBoolean then TypBoolean else failwith "Erreur de typage binop"
-  | _ -> failwith "unknow binop"
 
 let type_unop t up =
   match up with
@@ -54,6 +53,16 @@ let rec type_expression env e =
 			  if(typ == TypInteger) then 
 			    {node = Epostincr(ta, incr); info = typ}
 			  else failwith "Erreur Type post++"
+  | Eset (a, e) ->
+     let te = type_expression env e in
+     let ta, typ = type_access env a in
+     if Type_class.subType te.info typ then 
+       {node = Eset(ta, te); info = typ; }
+     else
+       failwith "Erreur de type affectation";
+  | EfunCall (c) -> failwith "ici une fonction"
+(*let (id, le) = c in
+		    List.fold_left*)
   (*| EfunCall  ->
     | EinstOf   ->
     | Enew      ->*)
@@ -89,13 +98,6 @@ let rec type_instr env i =
   | Iblock b ->
      let _, tb = type_block env b in
      env, {node = Iblock(tb); info = TypVoid; }
-  | Iset (a, e) ->
-     let te = type_expression env e in
-     let ta, typ = type_access env a in
-     if Type_class.subType te.info typ then 
-       env, {node = Iset(ta, te); info = typ; }
-     else
-       failwith "Erreur de type affectation";
   | Iif (e, b) -> 
      let te = type_expression env e in
      let _, tb = type_block env b in
@@ -117,7 +119,8 @@ let rec type_instr env i =
        | Some e -> Some (type_expression env e)) in
      let _, tb = type_block env b in
      env, {node = Ifor(te1, te2, te3, tb); info = TypVoid; }
-  (*  | IprocCall of 'info call *)
+  | Iexpr e ->
+     env, { node = Iexpr (type_expression env e); info = TypVoid; }
   |Idecl (typ, id, oe) ->
      begin
        match oe with

@@ -56,7 +56,7 @@ let builtins_data =
     label "__str_null" ++
     string "null" ++
     label "__str_d" ++
-    string "%d" ++
+    string "%d\n" ++
     label "__null_error_msg" ++
     string "null pointer exception\n" ++
     label "__div0_error_msg" ++

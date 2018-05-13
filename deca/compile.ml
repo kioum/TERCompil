@@ -67,22 +67,63 @@ movq ~$24 ~%rdi ++
 			    (match incr with
 			    |Pun -> subl ~$1 ~%eax
 			    |Mun -> addl ~$1 ~%eax)
+  | Eset(a, e) -> let ecode = compile_expr env e in
+		 let pos_rbp = compile_access env a in
+		 ecode ++
+		   movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp)
   | Ebinop(e1, op, e2) ->
      let code1 = compile_expr env e1 in
      let code2 = compile_expr env e2 in
      let lbl_next = gen_label () in
+     let lbl_next2 = gen_label () in
      match op with
      | Eq -> expr_calcul code1 code2 ++
         cmpl ~%eax ~%r9d ++
 	je lbl_next ++
 	movl ~$0 ~%eax ++
 	label lbl_next 
-	       
-	
+     | Neq -> expr_calcul code1 code2 ++
+	cmpl ~%eax ~%r9d ++
+	jne lbl_next ++
+	xorl ~%eax ~%eax ++
+	label lbl_next
+     | Lt -> expr_calcul code1 code2 ++
+	cmpl ~%eax ~%r9d ++
+	jl lbl_next++
+        xorl ~%eax ~%eax ++
+	label lbl_next 
+     | Le -> expr_calcul code1 code2 ++
+	cmpl ~%eax ~%r9d ++
+	jle lbl_next ++
+        xorl ~%eax ~%eax ++
+	label lbl_next 
+     | Mt -> expr_calcul code1 code2 ++
+	cmpl ~%eax ~%r9d ++
+	jg lbl_next ++
+	movl ~$0 ~%eax ++ 
+	label lbl_next
+     | Me -> expr_calcul code1 code2 ++
+	cmpl ~%eax ~%r9d ++
+	jge lbl_next++
+        xorl ~%eax ~%eax ++
+	label lbl_next
      (* sete %al ++ movzbl %al %eax *)
      (* movzbq %al %eax *)
-     (*| Div ->   si b!= 0 :
-       idiv %r10d  (*q->eax r -> edx *) cltd*)
+     | Div -> code2++
+	cmpl ~$0 ~%eax++
+	jne lbl_next ++
+	call "__builtin_div0_error"++
+	label lbl_next ++
+	expr_calcul code2 code1 ++
+	movl ~$0 ~%edx ++
+	movl ~%r9d ~%ebx ++
+	idivl ~%ebx
+     | Modulo -> expr_calcul code2 code1 ++
+	movl ~$0 ~%edx ++
+	movl ~%r9d ~%ebx ++
+	idivl ~%ebx ++
+	movl ~%edx ~%eax
+     (* idiv ~%r10d  (*q->eax r -> edx *) cltd*)
      | And ->
         code1 ++
           cmpl ~$0 ~%eax ++
@@ -103,7 +144,8 @@ movq ~$24 ~%rdi ++
 	      addl ~%r9d ~%eax
 	end
      | Sub -> expr_calcul code1 code2 ++
-        subl ~%eax ~%r9d
+        subl ~%r9d ~%eax ++
+	 negl ~%eax
      | Mult -> expr_calcul code1 code2 ++
         imull ~%r9d ~%eax
 	
@@ -117,7 +159,6 @@ and compile_access env a =
   match a with
   | Aident id -> List.assoc id env
   | Afield (e, id) -> failwith "todo field"
-  | _ -> failwith "Error access compile"
      
           
 let rec compile_block exit_lbl min_rbp cur_rbp env tbody =
@@ -138,29 +179,23 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
     Iskip ->
       min_rbp, cur_rbp, env, nop
   | Iblock bl -> compile_block exit_lbl min_rbp cur_rbp env bl
-  | Idecl(_, id, oe) ->
+  | Idecl(typ, id, oe) ->
      begin
+       let decalage = (match typ with
+	 |TypInteger -> 8
+	 |TypBoolean -> 8
+	 |TypClass "String" -> 16) in
        match oe with
        (*init default*)
-       |None -> min_rbp, cur_rbp-8, (id, cur_rbp-8)::env, nop
+       |None -> min_rbp, cur_rbp-decalage, (id, cur_rbp-decalage)::env, nop
        |Some e ->
 	  let ecode = compile_expr env e in
-	  let decalage = (match e.info with
-	    |TypInteger -> 8
-	    |TypBoolean -> 8
-	    |TypClass "String" -> 16) in
 	  let declcode =
 	    ecode ++
 	      movq ~%rax (addr ~ofs:(cur_rbp-decalage) ~%rbp)
 	  in
 	  min_rbp, cur_rbp-decalage, (id, cur_rbp-decalage)::env, declcode
      end
-  |Iset(a, e) -> let ecode = compile_expr env e in
-		 let pos_rbp = compile_access env a in
-		 let setcode = ecode ++
-		   movq ~%rax (addr ~ofs:(pos_rbp) ~%rbp)
-		 in
-		 min_rbp, cur_rbp, env, setcode 
   (*| Ireturn e ->
        match e with 
     |None -> min_rbp cur_rbp env nop++ jmp lbl_exit
@@ -197,13 +232,28 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
          label lbl_next
      in
      min min_rbp1 min_rbp, cur_rbp, env, ifcode
-   | Ifor(oe1, oe2, oe3) -> let lbl_boucle = gen_label() in
-        let forcode = 
-           (match oe1 with
-             |None -> nop
-             |Some e -> compile_expr env e) ++
-             label lbl_boucle ++
-           (match oe2 with
+   | Iexpr(e) -> min_rbp, cur_rbp, env, compile_expr env e
+   | Ifor(oe1, oe2, oe3, i) ->
+      let lbl_boucle = gen_label() in
+      let lbl_next = gen_label() in
+      let min_rbp1, _, _, icode =
+	compile_block exit_lbl min_rbp cur_rbp env i in
+      let forcode = 
+        (match oe1 with
+        |None -> nop
+        |Some e -> compile_expr env e) ++
+          label lbl_boucle ++
+          (match oe2 with
+	  |None -> cmpl ~$1 ~%eax
+	  |Some e -> compile_expr env e ++ cmpl ~$0 ~%eax) ++
+	  je lbl_next   ++
+	  icode ++
+	  (match oe3 with
+	  |None -> nop
+	  |Some e -> compile_expr env e)++
+	  jmp lbl_boucle ++
+	  label lbl_next in
+      min min_rbp1 min_rbp, cur_rbp, env, forcode
    | Iprint (oe) ->
       begin
 	match oe with
@@ -220,8 +270,8 @@ and compile_instr exit_lbl min_rbp cur_rbp env i =
 			end
 		    in min_rbp, cur_rbp, env, printcode 
       end
-      
-
+	
+	
 let compile_prog (classes, { instructions = tbody }) =
   let min_rbp,_,_,code_main_body = (compile_block "" 0 0 [] tbody) in
   let code_main =
@@ -238,22 +288,21 @@ let compile_prog (classes, { instructions = tbody }) =
       movq ~$0 ~%rax ++
       ret 
   in
--
-
+  
   let code = code_main ++ 
     builtins
   in
   let data = nop ++
     (Hashtbl.fold (fun str lbl a_code -> a_code ++ label lbl ++ string str) str_table nop) ++
     builtins_data
-    
+  
   in
   {
     text = code;
     data = data
   }
 (* 
-todo chaine
+   todo chaine
    créer structure de données pour les chaines (table_str)
    const strings parcourir Table_str et remplir la section data
    descripteur : commencer par desc$string

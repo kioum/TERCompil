@@ -4,69 +4,17 @@ main:
 	pushq %rbp
 	movq %rsp, %rbp
 	addq $0, %rsp
-	movl $1, %eax
+	movl $4, %eax
+	pushq %rax
+	movl $9, %eax
+	popq %r9
+	movl $0, %edx
+	movl %r9d, %ebx
+	idivl %ebx
+	movl %edx, %eax
 	movq %rax, -8(%rbp)
-	movl $1, %eax
-	movq %rax, -16(%rbp)
-	movl $1, %eax
-	movq %rax, -24(%rbp)
-	movl $1, %eax
-	movq %rax, -32(%rbp)
-	movq -16(%rbp), %rax
-	addl $1, %eax
-	movq %rax, -16(%rbp)
+	movq -8(%rbp), %rax
 	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00001, 8(%rax)
-	movq $1, 16(%rax)
-	call __builtin_print_String
-	movq -16(%rbp), %rax
-	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00002, 8(%rax)
-	movq $2, 16(%rax)
-	call __builtin_print_String
-	movq -24(%rbp), %rax
-	subl $1, %eax
-	movq %rax, -24(%rbp)
-	addl $1, %eax
-	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00001, 8(%rax)
-	movq $1, 16(%rax)
-	call __builtin_print_String
-	movq -24(%rbp), %rax
-	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00002, 8(%rax)
-	movq $2, 16(%rax)
-	call __builtin_print_String
-	movq -32(%rbp), %rax
-	subl $1, %eax
-	movq %rax, -32(%rbp)
-	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00001, 8(%rax)
-	movq $1, 16(%rax)
-	call __builtin_print_String
-	movq -32(%rbp), %rax
-	call __builtin_print_int
-	movq $24, %rdi
-	call malloc
-	movq $1234, 0(%rax)
-	movq $__str__label__00002, 8(%rax)
-	movq $2, 16(%rax)
-	call __builtin_print_String
 __exit_main:
 	movq %rbp, %rsp
 	popq %rbp
@@ -108,10 +56,6 @@ __builtin_div0_error:
 	movq $1, %rdi
 	call exit
 .data
-__str__label__00002:
-	.string " \n"
-__str__label__00001:
-	.string " "
 #Définitions des constantes
 __str_true:
 	.string "true"
@@ -120,7 +64,7 @@ __str_false:
 __str_null:
 	.string "null"
 __str_d:
-	.string "%d"
+	.string "%d\n"
 __null_error_msg:
 	.string "null pointer exception\n"
 __div0_error_msg:

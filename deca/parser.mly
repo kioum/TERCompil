@@ -1,5 +1,4 @@
 %{
-  open Printf
   open Ast
   let mk_loc p e = {node = e; info = p}
 %}
@@ -79,6 +78,7 @@ main_class_def:
  | PUBLIC; CLASS; id=IDENT; OA;
 PUBLIC; STATIC; VOID; main=IDENT; OP; STRING; arg=IDENT; OC; CC; CP;
 b=bloc;CA {{name = id; params = arg ; instructions = b} }
+ |
 ;
 class_defs:
  | cds=list(class_def) {cds}
@@ -95,23 +95,15 @@ instr_:
  | i = instruction     { mk_loc ($startpos, $endpos) i }
 ;
 instruction:
- (*| ie=instr_expr; SEMI {ie}  *)
- | ac=acces; SET; e=expr; SEMI {Iset(ac,e)}
- (* | id=IDENT; SEMI {id}*)
+ | SEMI; {Iskip}
  | t=typ; id=IDENT; e=affectation {Idecl(t,id, e)}
  | IF; OP; e=expr; CP; b=bloc; {Iif(e,b)}
  | IF; OP; e=expr; CP; b1=bloc; ELSE; b2=bloc {Iifelse(e,b1,b2)}
  | FOR; OP; e1= option (expr); SEMI; e2=option(expr); SEMI; e3=option(expr); CP; b=bloc {Ifor(e1,e2,e3,b)}
  | b=bloc {Iblock(b)} 
-(* | id=IDENT; MUN; SEMI {()}
- | id=IDENT; PUN; SEMI {()}
- | datt=decl_att; SEMI {()}
- | dmet=decl_meth; SEMI {()}
- | dconst=decl_constr; SEMI {()}
-	  | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP; SEMI {(*New(id,l)*)()}*)
  | RETURN; e= option(expr); SEMI {Ireturn(e)}
  | PRINTLN; OP; e= option(expr); CP;SEMI { Iprint(e)}
- | e = expr ; SEMI {Iexpr(e)}
+ | e = expr; SEMI {Iexpr(e)}
 ;
 
 affectation:
@@ -123,21 +115,23 @@ expr:
  |e = instr_expr {mk_loc ($startpos, $endpos) e}
 ;
 instr_expr:
- (*| ap=appel; {EfunCall(ap)}*)
+ (* instr_expr *)
+ | ac=acces; SET; e=expr; {Eset(ac,e)}
  | i = incr; ac=acces {Epreincr(i,ac) }
- | ac=acces; i=incr {Epostincr(ac,i)} (********************************)
+ | ac=acces; i=incr {Epostincr(ac,i)}
+ | ac=acces {Eaccess(ac)}
+ | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
+ | ap = appel; {EfunCall(ap)}
+ (*Expr *)
  | lit=literal { Econst(lit) }
- (*| id=IDENT {id}*)
- (*| MINUS; lit=literal {Eunop(MINUS,lit)}*)
  | e1=expr; bop=binop; e2=expr { Ebinop(e1,bop, e2) }
  | up=unop; e=expr { Eunop(up, e) }
  | e=expr; INSTOF; id=IDENT {EinstOf(e, id)}
- | OP; t=typ; CP;e= expr {Ecast(t,e)}
- (*| ie=expr {ie}*)
- | ac=acces {Eaccess(ac)}
- (*| OP; e=expr; CP {e}************************************************)
- | NEW; id=IDENT; OP; l=separated_list(COMMA,expr); CP {Enew(id,l)}
- | i = instr_ {Einst(i)}
+ | OP; t=typ; CP;e=expr {Ecast(t,e)}
+ | OP; e=expr; CP {e.node}
+;
+appel:
+| ac = acces; OP; l=option(separated_list(COMMA, expr)); CP { (ac, l) }
 ;
 decl:
  | dc=decl_constr {dc}
@@ -160,52 +154,13 @@ acces:
  | id=IDENT {Aident(id)}
  | e=expr; PT; id2=IDENT {Afield(e,id2)}
 ;
-;
+
 typ:
  | INT {TypInteger }
  | VOID {TypVoid } 
  | BOOL {TypBoolean}
  | STRING {TypClass "String"}
 ;
-(*/////////////////////////////////////////////////*)
-
-(*
-
-instr_expr:
- (*| ac=acces; SET; e=expression{Eaccess(ac,e)}*)
- | ap=appel; {EfunCall(ap)}
- | i=incr; ac=acces {Epreincr(i,ac) }
- | ac=acces; i=incr {Epostincr(ac,i)}
- (*| ac=acces; i=incr {Epostincr(i,id)}
-   | i=incr; ac=aces {Epreincr(i,id) }*)
-(* | NEW; id=IDENT; OP; l=separated_list(COMMA,expression); CP {Enew(id,l)}*)
-;
-
-
-*)
-(*/////////////////////////////////////////////////*)
-
-
-(*/////////////////////////////////////////////////*)
-
-(*
-expression:
- | lit=literal { Literal(lit) }
- | id=IDENT {id}
- (*| NEQ; lit=literal {()}*)
- | MINUS; lit=literal {Eunop(MINUS,lit)}
- | e1=expression; bop=binop; e2=expression  { Binop(bop, e1, e2) }
- | e=expression; INSTOF; id=IDENT {e}
- | OP; t=typ; CP;e= expression {Ecast(t,e)}
- (*| OP; INT; CP; e=expression {Int e}
-   | OP; BOOL; CP e=expression {Bool e}*)
- | ie=instr_expr {ie}
- | ac=acces {Eaccess(ac)}
- | OP; e=expression; CP {e}
-;
-*)
-(*/////////////////////////////////////////////////*)
-
 
 literal:
  | i=CONST_INT {Cint(i)}
